@@ -1,0 +1,86 @@
+\chapter{Conclusiones}
+
+% [16:34:24] <ChIIph ...> hey... do you have a couple of minutes to talk heap bofs?
+% [16:34:39] <Dan Rosenberg> only a few minutes, but sure
+% [16:35:04] <ChIIph ...> I was reading the heap exploit on unlink technique...
+% [16:35:12] <Dan Rosenberg> ah yes
+% [16:35:28] <ChIIph ...> have you ever try to build a simple example and the exploit that goes with it with the latest glibc?
+% [16:35:38] <Dan Rosenberg> it doesn't work with the latest glibc
+% [16:35:45] <Dan Rosenberg> that technique has been dead for years :(
+% [16:36:28] <ChIIph ...> yes, I imagined... I guess the only thing that's current is the house of lore that guy wrote about in phrack
+% [16:36:51] <Dan Rosenberg> well, those techniques only work in very specific scenarios that you're unlikely to encounter in real life
+% [16:36:53] <ChIIph ...> they are so freaking hard to craft even to learn......... bleh I hate heap bofs :D
+% [16:37:00] <Dan Rosenberg> i wouldn't bother to be honest
+% [16:37:06] <ChIIph ...> yeah, I know...
+% [16:37:16] <Dan Rosenberg> the chance of you finding a vuln that you could exploit with those techniques is practically nothing
+% [16:37:22] <Dan Rosenberg> but that's only one category of heap overflow
+% [16:37:30] <ChIIph ...> but that leaves us with stack bofs... and from there we go to lame web vulns hehe... it's really boring!!
+% [16:37:32] <Dan Rosenberg> those are all attacks involving corruption of heap metadata
+% [16:37:50] <Dan Rosenberg> it's much more likely to be able to leverage corruption of heap data rather than metadata
+% [16:38:02] <Dan Rosenberg> that's application specific
+% [16:38:14] <ChIIph ...> so manipulate program execution without injecting code?
+% [16:38:20] <ChIIph ...> *to manipulate
+% [16:38:23] <Dan Rosenberg> yes
+% [16:38:42] <Dan Rosenberg> for example, by overwriting heap structures containing function pointers
+% [16:38:51] <ChIIph ...> in C++, yes
+% [16:39:14] <Dan Rosenberg> well, also in C
+% [16:39:20] <Dan Rosenberg> more likely in C++ with vtables
+% [16:39:29] <ChIIph ...> so for those attacks being unable to corrupt metadata but able to overflow data itself it's a great advantage
+% [16:39:56] <Dan Rosenberg> well, you'll still inevitably corrupt metadata
+% [16:39:57] <ChIIph ...> yes, but in C++ there are tons of function pointers... in C it's more rare I guess...
+% [16:40:05] <Dan Rosenberg> not in the kernel :)
+% [16:40:10] <ChIIph ...> haha true
+% [16:40:23] <Dan Rosenberg> even though you corrupt metadata, that's only going to trigger an abort if the corrupted objects are free'd
+% [16:40:26] <ChIIph ...> Dan "KernelMode" Roserberg :P
+% [16:40:34] <ChIIph ...> right
+% [16:40:44] <Dan Rosenberg> so as long as you accomplish what you need to before the corrupted chunks are freed, it's all good
+% [16:40:48] <ChIIph ...> so may be you can reach a sensitive part of the application before it crashes...
+% [16:40:55] <Dan Rosenberg> right
+% [16:41:00] <Dan Rosenberg> it all depends on the app
+% [16:41:12] <ChIIph ...> but the whole "hacker idea" of taking control of the computer is out of the question
+% [16:41:22] <Dan Rosenberg> well, depends what you mean
+% [16:41:28] <Dan Rosenberg> gaining control of execution might be possible
+% [16:41:38] <Dan Rosenberg> it just might need a few more steps
+% [16:41:44] <ChIIph ...> how? if you only control the app flow
+% [16:41:54] <Dan Rosenberg> suppose you can overwrite a heap object that contains a pointer
+% [16:42:01] <Dan Rosenberg> and subsequent code involves writing data to that pointer
+% [16:42:15] <Dan Rosenberg> you might be able to leverage a heap overflow to change that pointer, causing the application to write into arbitrary memory
+% [16:42:19] <Dan Rosenberg> for example
+% [16:42:54] <ChIIph ...> true, but if you can't control the EIP, you can't do much for "code ejecution"
+% [16:43:24] <Dan Rosenberg> you can usually leverage that to control EIP
+% [16:43:44] <Dan Rosenberg> if you have an arbitrary write, you can overwrite a GOT entry, saved return address, function pointer...
+% [16:44:14] <ChIIph ...> it'd be hard as hell with PaX+ASLR enabled though
+% [16:44:19] <Dan Rosenberg> sure
+% [16:44:22] <Dan Rosenberg> but that's life these days :)
+% [16:44:26] <ChIIph ...> but it's possible hehe
+% [16:44:49] <ChIIph ...> yeah, if only we were born 10 years earlier
+% [16:45:05] <Dan Rosenberg> hehe
+% [16:45:13] <Dan Rosenberg> well, the kernel's still a soft target
+% [16:45:15] <Dan Rosenberg> exploits are easy
+% [16:45:26] <Dan Rosenberg> and memory corruption in userland isn't dead by any means
+
+
+% panorama actual para ASLR+NX: info leak + ROP para armar un segmento ejecutable y copiar el payload
+% o info leak + ret2-dl (ver phrack)
+
+El panorama actual se ve muy bien equipado para proteger a los usuarios de los problemas m\'as comunes, pero ¿Realmente est\'a todo protegido?. La respuesta, obviamente, es ``No''.
+
+Lo que sucede es que todas las protecciones, en alg\'un punto, aseguran propiamente la puerta principal pero siempre dejan una ventana no tan asegurada. De alguna de estas situaciones ya se habl\'o, y existen otras que superan el alcanse de este trabajo, pero lo importante es que existen.
+
+Tomemos un ejemplo de esta situaci\'on, analizando primero la condici\'on actual de la mayor\'ia de las computadoras con GNU/Linux: el mayor porcentaje no cuentan con la protecci\'on m\'as poderosa de todas: PaX. Esta solo se encuentra presente en sistemas que han pasado por un proceso de ``hardening'', como pueden ser servidores p\'ublicos, o computadoras con datos sensibles. Esta situaci\'on nos deja \'unicamente con NX, ASLR b\'asico, protecciones de la GLibC, y el Stack Protector de GCC. Dependiendo de la distribuci\'on utilizada, Stack Protector puede no estar habilitado.
+
+Ahora al ejemplo: LibTiff, vulnerabilidad CVE-2010-2067. Esta vulnerabilidad se encuentra en el parseo de entradas de directorios propios del formato Tiff (TIFFDirEntry), y se trata de un llamado a la operaci\'on memcpy que utiliza un par\'ametro especificado en el archivo de imagen para saber cuantos bytes copiar de una dada locaci\'on al buffer ``vulnerable''. En una imagen bien formada, esta operaci\'on concluir\'ia con \'exito y sin problemas. Si la imagen es propiamente alterada, se produce un overflow del buffer. 
+
+LibTiff est\'a enlazada a una gran cantidad de aplicaci\'ones, cualquiera que utilice el formato de im\'agenes Tiff en GNU/Linux utiliza esta biblioteca. Esto muestra un grave problema: una vulnerabilidad en una biblioteca muy utilizada desemboca en una vulnerabilidad que abarca un gran porcentaje del sistema.
+
+Este buffer overflow del stack, tiene una caracter\'istica muy interesante: ocurre en un array con solo dos elementos, por lo que el Stack Protector configurado con los valores por defecto no pondr\'a un canario para este buffer, es decir, acabamos de saltear una protecci\'on.
+
+Para explotar una vulnerabilidad es necesario lograr ejecutar c\'odigo inyectado, para ello hay que cargar el shellcode en alg\'un buffer al cual se pueda direcci\'onar la ejecuci\'on. Aca nos encontramos con dos problemas: no se puede ejecutar en un buffer (NX), y no podemos saber la posici\'on del buffer (ASLR). Pero estos en realidad no son problemas si utilizamos return oriented programming y un buffer que sea est\'atico. 
+
+La idea es la siguiente: con ASLR b\'asico, solo los mapeos an\'onimos son randomizados, es decir, los mapeos de archivos (no an\'onimos) siguen siendo mapeados a direcciones est\'aticas. Como LibTiff sirve para manipular im\'agenes, podemos utilizar la secci\'on de datos de la misma para cargar nuestro payload en una secci\'on fija de la memoria. Haciendo uso de return oriented programming, podremos convertir el mapeo del archivo a uno ejecutable para luego dirigir el registro EIP a la locaci\'on conocida de nuestro payload y asi tomar total control de la aplicaci\'on. Y de esta forma, salteamos todas las protecciones del sistema.
+
+Cabe destacar que cuando se toma control de la ejecuci\'on, todo lo que se haga se ejecutar\'a con los permisos de la aplicaci\'on explotada. Por lo que si explotamos un navegador de internet, puede ser bueno para cierto tipo de ataques, pero no estar\'iamos aprovechando al m\'aximo las posibilidades que nos da esta vulnerabilidad. Para esto existe una aplicaci\'on llamada ``tiffinfo'', que tiene como owner al usuario ``root'' pero es ejecutable por ``world'', lo que significa que es el escenario perfecto.
+
+De todo esto, podemos concluir que a pesar de todos los esfuerzos de muchas personas por proteger las computadoras a pesar del factor humano, es imposible saltearlo ya que el mismo software esta programado por seres humanos, y como tales, cometemos errores. Asi, un buffer overflow del stack, que uno podr\'ia creer obsoleto con todos los m\'etodos de protecci\'on actuales, se convierte en un atacante con privilegios de administrador.
+
+Las protecciones del sistema operativo siguen siendo un porcentaje de la lucha contra este tipo de problemas, pero no comprenden la totalidad de la soluci\'on.

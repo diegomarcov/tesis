@@ -1,0 +1,36 @@
+\select@language {spanish}
+\contentsline {chapter}{\numberline {1}Introducci\'on}{3}
+\contentsline {section}{\numberline {1.1}Contexto actual}{3}
+\contentsline {section}{\numberline {1.2}Estructura del trabajo}{4}
+\contentsline {section}{\numberline {1.3}Aclaraciones}{5}
+\contentsline {chapter}{\numberline {2}Problemas b\'asicos de seguridad}{7}
+\contentsline {section}{\numberline {2.1}Stack based overflow}{7}
+\contentsline {subsection}{\numberline {2.1.1}Llamada a funciones y el Stack}{8}
+\contentsline {subsection}{\numberline {2.1.2}Ejemplo b\'asico}{10}
+\contentsline {subsection}{\numberline {2.1.3}Algunos tipos de ataques}{11}
+\contentsline {subsubsection}{Filtros en la entrada}{12}
+\contentsline {subsubsection}{Setuid}{12}
+\contentsline {subsubsection}{chroot}{13}
+\contentsline {subsubsection}{Sistemas de detecci\'on de intrusos}{13}
+\contentsline {subsubsection}{Egg hunting}{15}
+\contentsline {subsection}{\numberline {2.1.4}Return to library}{15}
+\contentsline {subsubsection}{ret2libc}{16}
+\contentsline {subsubsection}{ret2strcpy}{16}
+\contentsline {subsubsection}{Return oriented code}{16}
+\contentsline {section}{\numberline {2.2}Heap based overflow}{18}
+\contentsline {subsection}{\numberline {2.2.1}Ejemplo B\'asico}{20}
+\contentsline {subsection}{\numberline {2.2.2}Primeros ataques}{22}
+\contentsline {subsubsection}{dlmalloc}{22}
+\contentsline {subsection}{\numberline {2.2.3}Formas en las que se presentan los heap overflow}{24}
+\contentsline {subsection}{\numberline {2.2.4}Ataques avanzados}{25}
+\contentsline {subsubsection}{Entradas GOT}{25}
+\contentsline {subsubsection}{.DTORS}{26}
+\contentsline {chapter}{\numberline {3}Protecciones est\'aticas}{27}
+\contentsline {section}{\numberline {3.1}Introducci\'on a GCC}{27}
+\contentsline {subsection}{\numberline {3.1.1}Estructura}{27}
+\contentsline {subsection}{\numberline {3.1.2}Optimizaciones}{28}
+\contentsline {section}{\numberline {3.2}FORTIFY\_SOURCE}{29}
+\contentsline {section}{\numberline {3.3}Stack Protector}{32}
+\contentsline {subsection}{\numberline {3.3.1}Problemas}{35}
+\contentsline {section}{\numberline {3.4}Mudflap}{38}
+\contentsline {chapter}{\numberline {4}Conclusiones}{43}

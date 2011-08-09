@@ -1,0 +1,548 @@
+\chapter{Problemas b\'asicos de seguridad}
+	\label{cap:problemas_basicos}
+\section{Stack based overflow}
+	\label{sec:stackbof}
+
+Los stack based overflow son hist\'oricamente los m\'as populares y mejor entendidos m\'etodos de explotaci\'on de software. Fueron documentados por primera vez por Aleph One en el art\'iculo ``Smashing the stack for fun and profit'' de la revista electr\'onica Phrack. Este tipo de problemas existe desde que existe el lenguaje de programaci\'on C, y a pesar de ser tan comunes y conocidos son los bugs que m\'as existen en el software actualmente. El problema de los stack overflows viene dado por mezclar datos con informaci\'on de control en la aplicaci\'on en cuesti\'on que conlleva a poder tomar el control de la ejecuci\'on a trav\'es de la manipulaci\'on de los datos.
+
+Un buffer es una sucesi\'on de locaciones de memoria finita, com\'unmente representada como un arreglo en el lenguaje C. El acceso a dicha estructura de memoria no posee ning\'un tipo de checkeo de l\'imites y por ello es que puede ocurrir un overflow o desbordamiento de la misma. En el caso de los stack overflows, esto ocurre cuando la aplicaci\'on almacena la estructura de datos en el stack, ya sea por ser un par\'ametro pasado por valor a una funci\'on o por ser una variable local a la misma, y no se corroboran los l\'imites sobre los cuales se copian datos hacia la estructura. Por ejemplo:
+
+	\vspace{5 mm}
+	
+\begin{lstlisting}
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc,char **argv) {
+	int array[5] = {1, 2, 3, 4, 5};
+	
+	printf("%d\n", array[5]);
+	
+	return 0;
+}
+\end{lstlisting}
+
+	\vspace{5 mm}
+	
+Aqui el error reside en no haber recordado que si bien el array posee 5 elementos, la numeraci\'on comienza en cero, por lo que se est\'an referenciando los 4 bytes (u 8 en arquitecturas de 64 bits) siguientes al de la \'ultima locaci\'on del arreglo definido. Al momento de compilaci\'on, este error no es detectado, y el resultado es el siguiente:
+
+	\vspace{5 mm}
+	
+\begin{lstlisting}
+chiiph@delloise ~/src/tesis/tmp () $ gcc reference.c -o reference -Wall
+chiiph@delloise ~/src/tesis/tmp () $ ./reference 
+134513712
+\end{lstlisting}
+
+	\vspace{5 mm}
+	
+Aun habilitando todos los warnings de compilaci\'on, el error no es detectado por el compilador, y se puede observar la locaci\'on l\'ogica en decimal del byte siguiente al final del arreglo de enteros.
+
+Este tipo de flexibilidad provista por el lenguaje C es la fuente de este tipo de problemas.
+
+\subsection{Llamada a funciones y el Stack}
+	\label{sec:llamada_funciones}
+
+En arquitecturas en las cuales la cantidad de registros es limitada como en x86, el stack es utilizado para pasaje de par\'ametros a la hora de llamar a funciones, y para mantener la sucesi\'on de llamadas.
+
+Veamos un ejemplo:
+
+	\vspace{5 mm}
+	
+\begin{lstlisting}
+#include <stdio.h>
+
+void function(int a) {
+  printf("Inside function: a=%d\n", a);
+}
+
+int main(int argc, char **argv) {
+  function(4);
+
+  return 0;
+}
+\end{lstlisting}
+
+	\vspace{5 mm}
+	
+Analizando el c\'odigo ensamblador que resulta de compilar el ejemplo anterior:
+
+	\vspace{5 mm}
+	
+\begin{lstlisting}
+chiiph@delloise ~/src/tesis/tmp () $ gdb --quiet call
+Reading symbols from /home/chiiph/src/tesis/tmp/call...(no debugging symbols found)...done.
+(gdb) disas main
+Dump of assembler code for function main:
+   0x080483ec <+0>:	push   %ebp
+   0x080483ed <+1>:	mov    %esp,%ebp
+   0x080483ef <+3>:	and    $0xfffffff0,%esp
+   0x080483f2 <+6>:	sub    $0x10,%esp
+   0x080483f5 <+9>:	movl   $0x4,(%esp)
+   0x080483fc <+16>:	call   0x80483d0 <function>
+   0x08048401 <+21>:	mov    $0x0,%eax
+   0x08048406 <+26>:	leave  
+   0x08048407 <+27>:	ret    
+End of assembler dump.
+(gdb)
+\end{lstlisting}
+
+	\vspace{5 mm}
+	
+La primer instrucci\'on guarda en la pila el registro EBP (Extended Base Pointer), que referencia la base del stack. Luego se establece como nuevo Base Pointer el actual ESP (Extended Stack Pointer), de esta forma la funci\'on que luego ser\'a llamada operar\'a con el nuevo stack ``acotado''. Luego se le resta al stack pointer 0x10 (16) para reservar la memoria necesaria para los valores necesarios almacenados para la llamada a {\em function}: 4 bytes para el par\'ametro {\em a} de {\em function}, 4 bytes para la direcci\'on de retorno, y los 4 bytes del EBP que se realiz\'o el push anteriormente.
+
+Como se ve, el stack crece hacia las direcciones m\'as bajas. Cuando un item es agregado a la misma, el ESP es decrementado, pero el item en s\'i mismo se referencia hacia las direcciones mayores. Es decir, si el item almacenado es un arreglo, la direcci\'on del elemento 0 del arreglo ser\'a menor que la del elemento 1. Esta propiedad del manejo de memoria hace que si el arreglo del que se habl\'o se escribiera m\'as alla de los l\'imites de tama\~no del mismo, se sobreescribir\'ian los elementos que se encuentran ``por debajo de \'el'', es decir, la direcci\'on de retorno y el EBP guardado. Si se puede controlar la direcci\'on de retorno de una funci\'on, se puede controlar la ejecuci\'on de la aplicaci\'on a partir de ese punto. Hacia donde se dirige la ejecuci\'on y c\'omo se lo aprovecha depende de muchos factores, y de c\'omo est\'a protegido el entorno donde se ejecuta la aplicaci\'on.
+
+\subsection{Ejemplo b\'asico}
+	\label{sec:ejemplo_basico}
+	
+A modo de ejemplo, se muestra un stack based overflow muy simple:
+
+	\vspace{5 mm}
+	
+\begin{lstlisting}
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc,char **argv) {
+	char buf[256];
+
+	strcpy(buf,argv[1]);
+	
+	return 0;
+}
+\end{lstlisting}
+
+	\vspace{5 mm}
+	
+En este ejemplo la estructura utilizada para sobrecargar el stack es el array {\em buf}, cuyo tama\~no es fijo y establecido en la definici\'on del mismo, por ello es almacenado en el stack. Sobre esta estructura se realiza la copia de la cadena de car\'acteres pasada por par\'ametro a la aplicaci\'on. El problema reside en no corroborar el tama\~no de la cadena copiada en {\em buf}. Si el primer par\'ametro de la llamada a la aplicaci\'on excede los 256 bytes, se sobreescribir\'a cualquier dato que est\'e almacenado contiguamente en el stack. 
+
+	\vspace{5 mm}
+	
+\begin{lstlisting}
+chiiph@delloise ~/sec/abos/abo1 () $ ./ejemplo1 $(python -c "print 'A'*500")
+Segmentation fault
+
+chiiph@delloise ~/sec/abos/abo1 () $ gdb ejemplo1
+Reading symbols from /home/chiiph/src/tesis/tmp/ejemplo1...(no debugging symbols found)...done.
+(gdb) r $(python -c "print 'A'*500")
+Starting program: /home/chiiph/src/tesis/tmp/ejemplo1 $(python -c "print 'A'*500")
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb)
+\end{lstlisting}
+
+	\vspace{5 mm}
+	
+Se puede ver claramente como pasarle m\'as de 256 bytes como entrada causa un {\em Segmentation Fault}, y corri\'endola dentro de gdb podemos ver por qu\'e sucede lo propio. La direcci\'on 0x41414141 no es v\'alida, y en particular, 0x41 es el valor en hexadecimal de la letra A.
+
+En general, se busca sobreescribir el valor de retorno de la llamada a funci\'on para redirigir la ejecuci\'on al contenido del stack, o a la locaci\'on de una funci\'on de la {\em glibc} utilizando el stack para pasar par\'ametros a ella, y de esta forma tomar control de la aplicaci\'on.
+
+	\subsection{Algunos tipos de ataques}
+	
+	Los overflows basados en stack son muy simples de entender, pero no siempre son tan simples de explotar. En esta secci\'on, se enumerar\'an alguna de las t\'ecnicas usadas para aprovechar esta vulnerabilidad, y c\'omo t\'ecnicas de protecci\'on que a veces se utilizan no son realmente \'utiles.
+	
+	\subsubsection{Filtros en la entrada}
+		\label{sec:filtros}
+	
+	En muchas aplicaciones la entrada a partir de la cual ocurre el overflow puede que est\'e filtrada, ya sea porque los car\'acteres que espera tienen que ser en min\'uscula o may\'uscula, o tal vez utiliza car\'ateres unicode. Por lo que el shellcode que se utilice para explotar la aplicaci\'on puede que sea alterado, o que el mismo no funcione por contener car\'acteres inv\'alidos.
+	
+	Esto puede llevar a pensar que funciona en alg\'un modo como protecci\'on para ciertos shellcodes. Pero es muy facil de saltear. Los filtros, ya sea una aplicaci\'on open source o de c\'odigo cerrado, son muy f\'aciles de predecir, por lo que se puede producir una sucesi\'on de car\'acteres que luego del filtrado se transforme en el shellcode deseado. O se puede realizar uno libre de car\'acteres arbitrarios inv\'alidos para la aplicaci\'on.
+	
+	\subsubsection{Setuid}
+		\label{sec:setuid}
+	
+	A la hora de explotar una vulnerabilidad de este tipo en una aplicaci\'on, se busca explotar procesos de binarios con SUID, es decir, aplicaciones que se llaman en modo usuario pero cambian el usuario efectivo al administrador del sistema para ejecutar instrucciones privilegiadas. Entre este tipo de aplicaciones se encuentran ping, sudo, etc.
+	
+	Lo que muchas aplicaciones hacen para evitar correr completamente como administrador es setear el usuario efectivo como el que est\'a ejecutando la aplicaci\'on hasta que sea necesario hacer uso de codigo que no se puede correr en modo de usuario, como crear un socket en la aplicaci\'on ping.
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	setuid(getuid());
+	
+	// Codigo no privilegiado
+	...
+	
+	setuid(0);
+	
+	// Codigo privilegiado
+	...
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Esto da una falsa sensaci\'on de seguridad, ya que la aplicaci\'on sigue teniendo el SUID bit habilitado. De esta forma, si se logra ejecutar c\'odigo arbitrario a trav\'es de alguna vulnerabilidad, es solo cuesti\'on de ejecutar $setuid(0)$ y no importar\'a qu\'e usuario efectivo la aplicaci\'on hab\'ia establecido.
+	
+	Existen sistemas GNU/Linux que saltean este grave problema haciendo uso de las {\em filesystem capabilities}. Openwall GNU/*/Linux, un proyecto con m\'as de 10 a\~nos de desarrollo, utiliza esta estrategia, entre muchas otras, para asegurar el sistema.
+	
+	\subsubsection{chroot}
+		\label{sec:chroot}
+	
+	Los servidores HTTP, y de otros servicios remotos, suelen utilizar los {\em chroots} para correr cada servicio en un entorno separado del resto del sistema, simulando un encapsulamiento del mismo.
+	
+	La idea de dise\~no puede parecer muy efectiva, aun cuando un usuario logre tomar control del sistema a trav\'es de alguna vulnerabilidad, solo ver\'a el {\em subsistema} acotado por el {\em chroot}. Pero de nuevo, esto no representa una seguridad real. Una vulnerabilidad en el sistema de {\em chroot} hace que ejecutando el siguiente comando se ``rompa'' el chroot y se tenga acceso al sistema completo:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+void main() {
+	mkdir("sh",0755);
+	chroot("sh");
+	chroot("../../../../../../../../../../../../../../../../");
+}
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Existe una alternativa a los {\em chroots} presente en sistemas BSD, llamados {\em jails}, que no poseen este grave problema.
+	
+	\subsubsection{Sistemas de detecci\'on de intrusos}
+		\label{sec:ids}
+	
+	Los sistemas de detecci\'on de intrusos (IDS) funcionan de forma similar a los firewalls, analizando el tr\'afico de entrada al sistema a trav\'es de la red buscando patrones conocidos que pueden representar una amenaza.
+	
+	Los shellcodes utilizados, para ejecutar una shell, o abrir puertos en el sistema vulnerable, etc, suelen ser siempre los mismos, o muy similares. Estos patrones son los que el IDS busca, y bloquea.
+	
+	El problema reside en la premisa de que los shellcodes suelen ser similares. Existe una t\'ecnica, llamada {\em shellcode polim\'orfico} que funciona como contraejemplo a la premisa. 
+	
+	La idea inicial de polimorfismo consist\'ia en cifrar el shellcode, y generar una secuencia de descifrado que procese la secuencia de bytes cifrado y lo ``convierta'' en una secuencia de c\'odigo ejecutable. Diferentes formas de cifrado, hacen que el mismo shellcode se vea diferente a los ojos del IDS, y de esta forma no detectar que es una secuencia de instrucciones que comprometer\'an al sistema cuando la aplicaci\'on vulnerable reciba este paquete de datos de la red.
+	
+	Veamos la idea con el siguiente shellcode:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	push byte 0x68
+	push dword 0x7361622f
+	push dword 0x6e69622f
+	mov ebx,esp
+
+	xor edx,edx
+	push edx
+	push ebx
+	mov ecx,esp
+	push byte 11
+	pop eax
+	int 80h
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	La secci\'on que ejecuta $execve("/bin/bash",["/bin/bash",NULL],NULL)$ se codifica en el shellcode como la siguiente secuencia de bytes:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	"\x6A\x68\x68\x2F\x62\x61\x73\x68\x2F\x62\x69\x6E\x89\xE3\x31\xD2"
+	"\x52\x53\x89\xE1\x6A\x0B\x58\xCD\x80"
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Si el IDS analiza un paquete que contiene esta sucesi\'on de car\'acteres, sabr\'a que es parte de un shellcode para ejecutar una shell y lo bloquear\'a.
+	
+	Si el mismo shellcode es codificado, tal vez con t\'ecnicas tan simples como realizar un XOR de cada byte, se generar\'a una sucesi\'on de car\'acteres diferente. A la vez, el c\'odigo de descifrado puede contener c\'odigo de relleno que haga que tampoco pueda ser facilmente detectado por su $signature$.
+	
+	En concluci\'on, los IDSs funcionan para ciertos tipos de ataques, pero no son muy complejos de saltear.
+
+	\subsubsection{Egg hunting}
+		\label{sec:egg_hunting}
+	
+	Existe el caso en el cual la cantidad de bytes de entrada es realmente acotada, por lo que de existir un buffer overflow, tal vez no haya ning\'un shellcode v\'alido lo suficientemente peque\~no para ser inyectado. Esto puede verse como una protecci\'on, pero obviamente no presenta una real barrera. Existe una t\'ecnica llamada {\em egg hunting}, la cual consiste en inyectar un shellcode de muy pocas instrucciones cuyo objetivo sea buscar el espacio de memoria de la aplicaci\'on hasta encontrar un cierto $signature$ que representar\'a el shellcode real.
+	
+	Un ejemplo de este tipo de ataques se vio en una vulnerabilidad en el navegador web Konqueror, cuyo parser HTML pose\'ia buffer overflows con colores cuyo valor era demasiado largo, y similares con otros tag. De esta forma, puede que sea posible inyectar el $egg hunter$ en el tag de color, y el shellcode real en alguna otra secci\'on del c\'odigo HTML.
+	
+	\subsection{Return to library}
+		\label{sec:ret2lib}
+	
+	Uno de los primeros pasos para la proteccion contra buffer overflows basados en el stack fue establecer que la secci\'on de memoria que representa el stack sea ejecutable o escribible, pero no ambas. En un principio, esta protecci\'on fue realizada por software, como parte del kernel Linux, para luego pasar a ser implementada por hardware en los microprocesadores. Esto solucion\'o ataques cl\'asicos de inyecci\'on de c\'odigo a trav\'es del buffer que desataba la vulnerabilidad, pero al no resolver la ra\'iz del problema, no pas\'o mucho tiempo hasta que t\'ecnicas alternativas de explotado surgieron. Estas t\'ecnicas son las llamadas ``return to library'' en general, ya que sobreescriben la direcci\'on de retorno con la direcci\'on de alguna operaci\'on perteneciente a una biblioteca del sistema, y utilizan el stack para pasarle par\'ametros a la misma.
+	
+	\subsubsection{ret2libc}
+		\label{sec:ret2libc}
+	
+	Esta t\'ecnica hace uso de la biblioteca $libc$, presente en todo sistema GNU/Linux, y particularmente de la operaci\'on $system$, que sobreescribe el espacio de memoria actual con la del archivo binario pasado como p\'arametro y lo ejecuta.
+	
+	De esta forma, que el stack no sea ejecutable no impide la ejecuci\'on de una shell, por ejemplo.
+	
+	\subsubsection{ret2strcpy}
+		\label{sec:ret2strcpy}
+	
+	Otra posibilidad es utilizar la biblioteca de manejo de strings, espec\'ificamente la operaci\'on strcpy. De esta forma, se puede copiar c\'odigo inyectado en el stack a una secci\'on que s\'i sea ejecutable en el heap, y retornar hacia la direcci\'on donde comienza este espacio de memoria.
+	
+	\subsubsection{Return oriented code}
+		\label{sec:ret2code}
+	
+	Ambas t\'ecnicas anteriores pueden ser detenidas simplemente evitando que ciertas operaciones de las bibliotecas sean cargadas en memoria, pero eso puede ser salteado con un m\'etodo un poco m\'as complejo: return oriented code.
+	
+	Los ataques que utilizan esta t\'ecnica no realizan ning\'un tipo de llamado a funciones. De hecho, utiliza secuencias de intrucciones de la libc que no necesariamente fueron compiladas de forma expl\'icita en ella.
+	
+	Esta t\'ecnica combina un gran n\'umero de secuencias de instrucciones cortas utilizadas para contruir $gadgets$ que permiten computaci\'on arbitraria. Veamos esta idea con un ejemplo:
+	
+	El siguiente es un fragmento de la funci\'on $ecb\_crypt$ de la GNU LibC, a la izquierda se pueden ver los car\'acteres en hexadecimal que resultan de compilar la instrucci\'on de la derecha.
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	f7 c0 07 00 00 00		test $0x00000007, %edi
+	0f 95 45 c3      		setnzb -61(%ebp)
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Si analizamos la misma secuencia comenzando en el byte despues del $f7$
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	c0 07 00 00 00 0f		movl $0x0f000000, (%edi)
+	95               		xchg %ebp, %eax
+	45               		inc %ebp
+	c3               		ret
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	La frecuencia con que estas situaciones ocurren depende de las caracter\'isticas del lenguaje en cuesti\'on. Particularmente, el set de instrucciones de la arquitectura x86 es muy denso, lo que implica que una sucesi\'on aleatoria de bytes puede ser interpretada como distintas intrucciones con una muy alta probabilidad. Por lo que, en c\'odigo x86 es muy facil encontrar no solo palabras de memoria que tengan significados no intencionados, sino sucesiones enteras de palabras. Para que una secuencia sea util en este tipo de ataques, tiene que terminar en la instrucci\'on de retorno (byte c3).
+	
+	A la hora de construir un ataque con esta t\'ecnica, la forma de interacci\'on con la libc es muy distinta a las otras t\'ecnicas en los siguientes puntos:
+	\begin{itemize}
+		\item Las secuencias de c\'odigo que se ejecutan son cortas (dos o tres instrucci\'ones) y, cuando son ejecutadas por el procesador, realizan muy poco trabajo neto. En ataques t\'ipicos de ret2libc, la base sobre la cual se construye el ataque son funciones enteras que representan mucha m\'as funcionalidad que meras instrucciones.
+		\item Las secuencias de c\'odigo que se utilizan no poseen ni el t\'ipico comienzo de una llamada a funci\'on, ni las intrucciones t\'ipicas de fin de la llamada, como se explic\'o en la secci\'on \ref{sec:llamada_funciones}.
+		\item Las secuencias de c\'odigo que se utilizan no son llamados de una forma estandar y uniforme, a diferencia del llamado a funciones.
+	\end{itemize}
+	
+	Las primeras formas de estos ataques utilizaban una \'unica secuencia corta c\'odigo de la libc. Especialmente secuencias de bytes que representaban instrucciones como $pop \%reg$ para setear registros cuando estos son usados para pasaje de par\'ametros en arquitecturas como SPARC o x86\_64. Otras secuencias utilizadas son las que encadenan instrucciones de intruccion $pop \%reg$ y $ret$. Estas secuencias de c\'odigo son usadas en estos ataques para redireccionar la ejecuci\'on a c\'odigo en una dada locaci\'on o para realizar llamadas a funciones.
+	
+\section{Heap based overflow}
+
+	Adem\'as de los buffers almacenados en el stack, otro tipo de buffers muy importantes son los que residen en el heap.
+	
+	Un proceso en Linux posee diferentes segmentos de memoria, muchos de los cuales es imposible saber cuanta memoria es necesaria en tiempo de cargado, por lo que estos segmentos son reservados generalmente en tiempo de ejecuci\'on. Estas secciones se pueden ver con gdb:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+(gdb) maintenance info sections 
+Exec file:
+    `/home/chiiph/src/tesis/tmp/heap', file type elf32-i386.
+    0x8048154->0x8048167 at 0x00000154: .interp ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048168->0x8048188 at 0x00000168: .note.ABI-tag ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048188->0x80481bc at 0x00000188: .hash ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80481bc->0x80481dc at 0x000001bc: .gnu.hash ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80481dc->0x804825c at 0x000001dc: .dynsym ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x804825c->0x80482bd at 0x0000025c: .dynstr ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80482be->0x80482ce at 0x000002be: .gnu.version ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80482d0->0x80482f0 at 0x000002d0: .gnu.version_r ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80482f0->0x80482f8 at 0x000002f0: .rel.dyn ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80482f8->0x8048328 at 0x000002f8: .rel.plt ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048328->0x804833f at 0x00000328: .init ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x8048340->0x80483b0 at 0x00000340: .plt ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x80483b0->0x80485c8 at 0x000003b0: .text ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x80485c8->0x80485e4 at 0x000005c8: .fini ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x80485e4->0x8048620 at 0x000005e4: .rodata ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048620->0x8048624 at 0x00000620: .eh_frame ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8049f0c->0x8049f14 at 0x00000f0c: .ctors ALLOC LOAD DATA HAS_CONTENTS
+    0x8049f14->0x8049f1c at 0x00000f14: .dtors ALLOC LOAD DATA HAS_CONTENTS
+    0x8049f1c->0x8049f20 at 0x00000f1c: .jcr ALLOC LOAD DATA HAS_CONTENTS
+    0x8049f20->0x8049ff0 at 0x00000f20: .dynamic ALLOC LOAD DATA HAS_CONTENTS
+    0x8049ff0->0x8049ff4 at 0x00000ff0: .got ALLOC LOAD DATA HAS_CONTENTS
+    0x8049ff4->0x804a018 at 0x00000ff4: .got.plt ALLOC LOAD DATA HAS_CONTENTS
+    0x804a018->0x804a020 at 0x00001018: .data ALLOC LOAD DATA HAS_CONTENTS
+    0x804a020->0x804a028 at 0x00001020: .bss ALLOC
+    0x0000->0x005a at 0x00001020: .comment READONLY HAS_CONTENTS
+(gdb) 
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+% 	\begin{figure}
+% 		\centering
+% % 			\includegraphics[width=0.5\textwidth]{}
+% 		\caption{Espacio de memoria de un proceso}
+% 		\label{fig:mem}
+% 	\end{figure}
+	
+	El heap es el \'area de memoria utilizada por las aplicaciones para reservar memoria din\'amicamente en tiempo de ejecuci\'on. Este tipo de buffer overflow son comunes como los de stack, pero muy distintos a la hora de explotarlos. A diferencia de los basados en el stack, los heap overflow puede ser muy inconsistentes y pueden ser explotados de diversas formas, con distintas consecuencias.
+	
+	La mayor diferencia entre el stack y el heap es que es persistente entre llamadas a funciones, la memoria permanece reservada hasta que es expl\'icitamente liberada. Esto implica que un heap overflow puede ocurrir en un dado momento, pero no ser notado hasta tiempo despu\'es cuando ese espacio del heap es utilizado nuevamente. En este tipo de sobrecargado de memoria no existe la idea de sobreescribir el registro EIP salvado, pero otros datos son almacenados en el heap que pueden ser manipulados por sobrecargas de estos buffers din\'amicos.
+	
+	El heap se encuentra en el mismo segmento de memoria que el stack, pero a diferencia de este \'ultimo, crece hacia las direcciones altas de memoria. La memoria es reservada en este espacio a trav\'es de las funciones del estilo del $malloc$ ($HeapAlloc()$, $malloc()$, $new()$, etc). De forma an\'aloga se liberan los espacios utilizados con funciones del estilo del $free$ ($HeapFree()$, $free()$, $delete()$, etc). El manejo del heap es realizado por un $Heap Manager$, que maneja la reserva y liberaci\'on de memoria de forma din\'amica.
+	
+	A diferencia del manejo de memoria con el stack, el manejo din\'amico de memoria debe ser manejado expl\'icitamente. En este texto nos concentraremos en el lenguaje C, y las implementaci\'ones del $Heap Manager$ de la GNU LibC, ya que no son uniformes a lo largo de las distintas plataformas existentes.
+	
+	De forma general, se puede considerar al heap como un conjunto de bloques, algunos en uso y otros libres. Estos bloques estan reservados en el heap de forma contigua, con informaci\'on de control entre cada bloque de datos puro.
+	
+	\subsection{Ejemplo B\'asico}
+	
+	Veamos un ejemplo de overflow simple en el heap:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main(int argc, char **argv) {
+	char *input = malloc(20);
+	char *output = malloc(20);
+
+	strcpy(output, "normal output");
+	strcpy(input, argv[1]);
+
+	printf("input at %p:%s\n", input, input);
+	printf("output at %p:%s\n", output, output);
+
+	printf("\n%s\n", output);
+
+	return 0;
+}
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Compilando y ejecutando el ejemplo:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+chiiph@delloise ~/src/tesis/tmp () $ gcc -o heap heap.c -Wall
+chiiph@delloise ~/src/tesis/tmp () $ ./heap asajdioasj doisad
+input at 0x804b008:asajdioasj
+output at 0x804b020:normal output
+
+normal output
+chiiph@delloise ~/src/tesis/tmp () $ ./heap $(python -c 'print "A"*40')
+input at 0x804b008:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+output at 0x804b020:AAAAAAAAAAAAAAAA
+
+AAAAAAAAAAAAAAAA
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Por lo que sobreescribir variables en el heap es bastante simple, y no necesariamente las aplicaciones abortan como ocurre con los stack overflow.
+	
+	\subsection{Primeros ataques}
+	
+	Un gran problema a la hora de explotar un heap overflow es que el manejo de los bloques de memoria reservados y liberados es dependiente de la implementaci\'on. Por ello, en una aplicaci\'on multiplataforma, puede ocurrir un heap overflow en una plataforma y no en otra.
+	
+	Muchas implementaciones guardan informaci\'on de control entre cada bloque de datos. Esto permite a un atacante potencialmente sobreescribir secciones espec\'ificas de memoria de forma tal que al ser usada por $malloc$ sobreescriba virtualmente cualquier locaci\'on en la memoria que se desee.
+	
+	Para llevar a cabo un ataque exitoso, hay que estudiar la implementaci\'on espec\'ifica del $malloc$ en la plataforma en la cual se quiera llevar a cabo el ataque. En este caso, por cuestiones de analizar partiendo de lo m\'as b\'asico, se analizar\'a la implementacion de Doug Lea que pertence a la GNU LibC 2.3. Actualmente, la GNU LibC m\'as utilizada es la 2.11, cuya implementaci\'on resuelve muchos problemas, pero aun es explotable, como veremos m\'as adelante. 
+	
+	Si bien estos ataques que se mostrar\'an a continuaci\'on son mayoritariamente obsoletos, sirven para graficar las particularidades de explotar un heap overflow.
+	
+	\subsubsection{dlmalloc}
+	
+	Las secciones de memoria reservada por $malloc$ poseen $boundary tags$, que son campos que contienen informaci\'on acerca del tama\~no de las secciones de memoria reservadas antes y despu\'es de la actual, asi como punteros a la secci\'on anterior y a la siguiente. Adem\'as en el tama\~no se encuentran codificadas flags, el tama\~no siempre es m\'ultiplo de 8, por lo que los \'ultimos 3 bits se encuentran libres.
+	
+	En otras palabras, el heap se ve como una sucesion de bloques de tama\~no variable, y listas enlazada ($bins$) de bloques libres clasificados seg\'un el tama\~no del bloque.
+	
+	El heap es manejado a traves de una secci\'on de memoria llamada bloque $desierto$, cuando se reserva un espacio nuevo de memoria, $malloc$ divide el bloque desierto. Cuando un bloque reservado es liberado por una llamada a $free()$, puede ser unido al bloque anterior a \'el ({\em backward consolidation}) o el siguiente ({\em forward consolidation}) si est\'an libres. De esta forma se asegura que no exitir\'an dos bloques contiguos libres en memoria. El bloque resultante es finalmente enlazado a la lista doblemente enlazada de bloques libres de tama\~no similar al liberado.
+	
+	El manejo de los bloques libres es similar al manejo cl\'asico de listas doblemente enlazadas. Si P es el bloque a librerar, se reemplaza el puntero del bloque siguiente a P (BK) con el del bloque anterior a P. El puntero del bloque anterior a P (FD) se reemplaza con el del bloque siguiente a P. Es decir,
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	*(P->fd+12) = P->bk;
+	*(P->bk+8) = P->fd;
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	En la primer sentencia se le suma 12 al puntero por ser 4 bytes para el tama\~no del bloque, 4 bytes para el tama\~no del bloque anterior, y 4 bytes para fd. En la segunda sentencia, son 4 bytes para el tama\~no y 4 bytes para el tama\~no del bloque anterior.
+	
+	En otras palabras, la direcci\'on (o cualquier dato) contenida en el puntero al bloque anterior de un bloque es escrita en la locaci\'on referenciada por el puntero al bloque siguiente m\'as 12. Si un atacante puede sobreescribir estos dos punteros y forzar la llamada a la funci\'on $free()$, puede sobreescribir cualquier locaci\'on de memoria.
+	
+	Analicemos ahora el manejo de los $bins$ de bloques libres. Los bloques dentro de un $bin$ son organizados en orden de tama\~no decreciente. Bloques del mismo tama\~no son enlazados con los que fueron liberados m\'as recientemente en el frente de la lista y son tomados a la hora de reservar memoria del final de la lista. Es decir, presenta un manejo de tipo FIFO.
+	
+	Cuando se libera un bloque se busca el \'indice de un $bin$ correspondiente al tama\~no del bloque liberado, luego se marca el $bin$ elegido para establecer que no esta vac\'io. Luego se determina la direcci\'on de memoria donde est\'a almacenado el $bin$, y por \'ultimo se guarda el bloque liberado en el lugar apropiado dentro del $bin$.
+	
+	Teniendo en cuenta esto, se puede observar lo siguiete:
+	\begin{itemize}
+		\item Si no existen bloques adyacentes al liberado, este ser\'a puesto en el $bin$ que corresponde.
+		\item Si el bloque contiguo en memoria al liberado est\'a libre, y si este este \'ultimo es la frontera del bloque $desierto$, entonces ambos son cosolidados con el bloque $desierto$.
+		\item Si el bloque siguiente o anterior al bloque liberado est\'a libre, estos son sacados de los $bins$ a los que pertenecen con el procedimiento ya descripto, son consolidados y puestos en el nuevo $bin$ que les corresponde con el nuevo tama\~no.
+	\end{itemize}
+	
+	Ahora supongamos que la aplicaci\'on vulnerable reserva dos bloques adyacentes en memoria (bloque A y B). El bloque A presenta un buffer overflow que permite sobrecargarlo hasta sobreescribir el bloque B. Se contruye los datos de la sobrecarga de forma tal que cuando $free(A)$ es llamado, el algoritmo decide que el bloque siguiente a A est\'a libre (no necesariamente es el bloque B). De esta forma, $free(A)$ trata de realizar {\em forward consolidation} entre A y un bloque C. En la sobreescritura, tambi\'en se le da al bloque C los punteros $fd$ y $bk$ tal que cuando se lo saque del $bin$ al que te\'oricamente est\'a enlazado, sobreescriba una locaci\'on de memoria a elecci\'on.
+	
+	\subsection{Formas en las que se presentan los heap overflow}
+	
+	\begin{itemize}
+	\item Samba:
+		\begin{lstlisting}
+	memcpy(array[user_supplied_int], user_supplied_buffer, user_supplied_int2);
+		\end{lstlisting}
+	\item Microsoft IIS:
+		\begin{lstlisting}
+	buf=malloc(user_supplied_int+1);
+	memcpy(buf,user_buf,user_supplied_int);
+		\end{lstlisting}
+	
+		\begin{lstlisting}
+	buf=malloc(strlen(user_buf+5));
+	strcpy(buf,user_buf);
+		\end{lstlisting}
+	\item Solaris Login:
+		\begin{lstlisting}
+	buf=(char **)malloc(BUF_SIZE);
+	while (user_buf[i]!=0) {
+		buf[i]=malloc(strlen(user_buf[i])+1);
+		i++;
+	}
+		\end{lstlisting}
+	\item Solaris Xsun:
+		\begin{lstlisting}
+	buf=malloc(1024);
+	strcpy(buf,user_supplied);
+		\end{lstlisting}
+	\end{itemize}
+	
+	\subsection{Ataques avanzados}
+	
+	Si bien la idea de ``avanzado'' es relativa con heap overflows, ya que no es una vulnerabilidad simple de explotar, se enuncian en esta secci\'on vectores de ataque aun m\'as dependientes de las bibliotecas utilizadas y especialmente del sistema operativo subyacente.
+	
+	En general, se tratan de realizar tres tipos de ataques:
+	
+	\begin{itemize}
+	\item Sobreescribir un puntero a funci\'on.
+	\item Sobreescribir c\'odigo que se encuentra en un segmento con permisos de escritura.
+	\item Sobreescribir alguna variable l\'ogica para controlar el flujo del programa.
+	\end{itemize}
+	
+	\subsubsection{Entradas GOT}
+	
+	GOT significa Global Offset Table, es la tabla donde se almacenan los offsets para llamadas a funciones con link din\'amico. Si se puede sobreescribir la direcci\'on que es usada para realizar la llamada a una dada funci\'on se puede ejecutar una funci\'on arbitraria.
+	
+	En general se utilizan funciones muy usadas como $printf()$, ya que en general es simple saber cuando esta funci\'on es ejecutada, es posible tener mayor control de la situaci\'on de explotado.
+	
+	A continuaci\'on se muestra la GOT del programa de ejemplo utilizado anteriormente:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+chiiph@delloise ~/src/tesis/tmp () $ objdump -R heap
+
+heap:     file format elf32-i386
+
+DYNAMIC RELOCATION RECORDS
+OFFSET   TYPE              VALUE 
+08049ff0 R_386_GLOB_DAT    __gmon_start__
+0804a000 R_386_JUMP_SLOT   __gmon_start__
+0804a004 R_386_JUMP_SLOT   __libc_start_main
+0804a008 R_386_JUMP_SLOT   memcpy
+0804a00c R_386_JUMP_SLOT   strcpy
+0804a010 R_386_JUMP_SLOT   printf
+0804a014 R_386_JUMP_SLOT   malloc
+	\end{lstlisting}
+
+	\vspace{5 mm}
+	
+	\subsubsection{.DTORS}
+	
+	.DTORS son destructores que gcc utiliza cuando se termina una aplicaci\'on. Sobreescribir algun puntero a funci\'on en los destructores, nos dar\'a control cuando la aplicaci\'on finalice.

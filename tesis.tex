@@ -1,0 +1,55 @@
+\documentclass[a4paper,12pt]{book}
+\usepackage[spanish]{babel}
+\usepackage[latin1]{inputenc}
+% \usepackage{fullpage}
+\usepackage{listings}
+% \usepackage{gmverb}
+% \usepackage[colorlinks=true,urlcolor=black,linkcolor=black]{hyperref}
+% \usepackage{graphicx}
+\usepackage[absolute]{textpos}
+
+\usepackage{setspace}
+\onehalfspacing
+
+\lstset{language=C,
+frame=single,
+basicstyle=\footnotesize,
+tabsize=2,
+showtabs=false,
+showspaces=false,
+showstringspaces=false}
+\lstset{breaklines}
+
+% \title{Protecciones contra t\'ecnicas de exploiting en GNU/Linux}
+% 
+% \author{Director: Mg. Javier Echaiz\\ \\ Tomás Touceda (LU: 84024)}
+% 
+% \date{08 de Diciembre de 2010}
+
+\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
+
+\title{Aplicación de Argumentación y diálogos\\en Sistemas Multiagentes orientados a juegos}
+
+\author{Diego Marcovecchio (LU: 83815)\\Director: Dr. Alejandro J. García}
+
+\date{20 de Agosto de 2011}
+
+\begin{document}
+\lstset{frame=single}
+\maketitle
+
+\null
+\vfill
+\pagebreak
+\thispagestyle{empty}
+
+\setcounter{page}{0}
+\tableofcontents
+
+\input{introduccion.tex}
+\input{problemasbasicos.tex}
+\input{proteccionesestaticas.tex}
+\input{conclusiones.tex}
+\input{bibliografia.tex}
+
+\end{document}

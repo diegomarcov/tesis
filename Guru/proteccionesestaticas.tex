@@ -1,0 +1,355 @@
+\chapter{Protecciones est\'aticas}
+
+\section{Introducci\'on a GCC}
+
+GCC es un compilador que en sus comienzos solo compilaba codigo en lenguaje C y GCC significaba GNU C Compiler. Con el tiempo, el compilador se fue reestructurando para pasar a soportar m\'as lenguajes, y GCC pas\'o a significar GNU Compiler Collection.
+
+	\subsection{Estructura}
+	
+	GCC en la actualidad posee una estructura modular que permite agregar todo tipo de features de forma completamente encapsulada, y que repercute en muchos entornos al mismo tiempo.
+	
+	El compilador de GNU est\'a formado principalmente por tres m\'odulos:
+	\begin{itemize}
+	\item Front-end: encargado de la interfaz entre el c\'odigo fuente del lenguaje en cuesti\'on y el lenguaje intermedio (GENERIC o GIMPLE, dependiendo del front-end).
+	\item Middle-end: encargado de las optimizaciones del c\'odigo y el pasaje de GIMPLE al lenguaje RTL.
+	\item Back-end: encargado de procesar RTL para producir c\'odigo ejecutable en alguna dada arquitectura.
+	\end{itemize}
+	
+	De esta forma, existen tres frentes a la hora de desarrollar para GCC. Por un lado, se puede agregar un lenguaje nuevo a la colecci\'on de compiladores, en cuyo caso se desarrollar\'ia un front-end. Otra posibilidad es soportar una nueva arquitectura, y para ello se deber\'a implementar un back-end. Y por \'ultimo si se desea generar una nueva forma de optimizaci\'on o de checkeos en tiempo de compilaci\'on que no tengan que ver con particularidades del lenguaje a compilar, se implementa una nueva parte en el middle-end.
+	
+	Con todo esto es a lo que se referia en el primer p\'arrafo en cuanto a la repercuci\'on. Si se desarrolla un nuevo front-end para un lenguaje, el mismo va a estar soportado en todas las arquitecturas en las cuales existe back-end, sin que el desarrollador del front-end expl\'icitamente lo desarrolle. Y lo mismo sucede con el back-end y m\'odulos del middle-end.
+	
+	\subsection{Optimizaciones}
+	
+	Las protecciones de las aplicaciones en tiempo de compilaci\'on prove\'idas por GCC funcionan con mayor efectividad cuando se utiliza compilaci\'on optimizada, por ello analizaremos en m\'as detalle como opera este m\'odulo del compilador.
+	
+	GCC utiliza tres lenguajes intermedios para representar el programa durante la compilaci\'on: GENERIC, GIMPLE y RTL. GENERIC es una representaci\'on independiente del lenguaje generado por cada front-end. Es usado como una interfaz entre el modulo de parsing y el de optimizaci\'on.
+	
+	GIMPLE y RTL es usado para optimizar el programa. GIMPLE es usado para optimizaciones independientes de la arquitectura final y del lenguaje utilizado para programar la aplicaci\'on, por ejemplo, para optimizar llamadas con inlines, eliminaci\'on de tail recursion, eliminaci\'on de redundancias, etc. A diferencia de GENERIC, la representaci\'on GIMPLE es m\'as estricta: las expresiones no deben contener m\'as de tres operandos exceptuando llamadas a funciones. No posee sentencias de control y expresiones con efectos secundarios son \'unicamente permitidas en el operando derecho de asignaciones.
+	
+\section{FORTIFY\_SOURCE}
+
+	Los overflows en un buffer del stack pueden ser detectados en tiempo de compilación o en tiempo de ejecución. FORTIFY\_SOURCE clasifica los tipos más simples de overflow, y basándose en esto realiza trés acciones distintas en tiempo de compilación:
+	
+	\begin{itemize}
+	\item Si es sabido que no es posible que exista un overflow, se compila normalmente el código.
+	\item Si es posible que ocurra un overflow en una dada secuencia de instrucciones, se agregan checkeos adicionales para prevenirlos.
+	\item Si es asegurado que un overflow sucederá, se informa de esto y no se continúa con la compilación.
+	\end{itemize}
+
+	El segundo caso corresponde a un checkeo en tiempo de ejecución, y el tercero a uno en tiempo de compilación, por lo que esta técnica puede ser considerada ``mixta'' en la división que se llevó a cabo de los temas en este trabajo.
+	
+	Para realizar los checkeos, se computan el número de bytes que restan hasta el final de un dado objeto (estructura de datos, etc) en cada llamada a funciones de manejo de memoria (\verb+memcpy()+) o de manejo de strings (\verb+strcpy()+).
+	
+	De los overflows más simples, se pueden identificar los siguientes casos:
+
+	Dado el siguiente buffer:
+
+\vspace{5 mm}
+
+	\begin{lstlisting}
+	char buf[5];
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	El primer caso abarca operaciones del estilo de:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	memcpy(buf, foo, 5);
+	strcpy(buf, "abcd");
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Las cuales son correctas en cuanto a buffer overflows, y se compilarán sin necesidad de checkeos adicionales.
+	
+	El segundo caso abarca los siguientes casos:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	memcpy(buf, foo, n);
+	strcpy(buf, bar);
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	En este caso, no es posible saber en tiempo de compilación si un overflow ocurrirá ya que, por ejemplo, la variable \verb+n+ puede ser proveída por el usuario. Lo que sí se puede efectuar es un checkeo en tiempo de ejecución. El compilador conoce los bytes que restan en el objeto pero no conoce el tamaño real de la copia que se va a realizar. Funciones alternativas de la libc, \verb+__memcpy_chk()+ y \verb+__strcpy_chk()+ son usadas en este caso para corroborar si un overflow ocurrió. En caso de que uno sea detectado, la función \verb+__chk_fail()+ es llamada, cuyo comportamiento es el de abortar la ejecución y mostrar un mensaje informando lo ocurrido.
+	
+	El tercer caso:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	memcpy(buf, foo, 6);
+	strcpy(buf, "abcde");
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Es incorrecto siempre, ya que el primer \verb+memcpy()+ copia un byte de más, y el \verb+strcpy()+ copia cinco bytes, anulando el lugar para el caracter de finalización \verb+\0+.
+	
+	En este caso el compilador puede detectar el error en tiempo de compilación. En versiones anteriores a la 4.5.0 GCC simplemente daba un warning en estos casos. A partir de la versión 4.5.0, los warnings pasaron a ser errores de compilación.
+	
+	Y el último caso:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	memcpy(p, q, n);
+	strcpy(p, q);
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	El cual no es posible saber si es correcto, y no es posible checkearlo en tiempo de ejecución. Este tipo de overflows son pasados por alto por FORTIFY\_SOURCE.
+	
+	Todo este proceso se realiza para las siguientes funciones:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	void *memcpy(void *dest, const void *src, size_t n);
+	void *mempcpy(void *dest, const void *src, size_t n);
+	void *memmove(void *dest, const void *src, size_t n);
+	void *memset(void *s, int c, size_t n);
+	
+	char *strcpy(char *dest, const char *src);
+	char *strncpy(char *dest, const char *src, size_t n);
+	
+	int printf(const char *format, ...);
+	int fprintf(FILE *stream, const char *format, ...);
+	int sprintf(char *str, const char *format, ...);
+	int snprintf(char *str, size_t size, const char *format, ...);
+	
+	int vprintf(const char *format, va_list ap);
+	int vfprintf(FILE *stream, const char *format, va_list ap);
+	int vsprintf(char *str, const char *format, va_list ap);
+	int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	FORTIFY\_SOURCE se puede aplicar en dos niveles. El nivel elegido determina la rigurosidad de los checkeos de tamaños del objeto en cuestión. Veamos un ejemplo:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	struct S {
+		struct T {
+			char buf[5];
+			int x;
+		} t;
+		char buf[20];
+	} var;
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	y el código posee la siguiente linea:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	strcpy(&var.t.buf[1], "abcdefg");
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	Si se compila el ejecutable con \verb+-D_FORTIFY_SOURCE=1+, el overflow pasará desapercibido, ya que solo se tomará en cuenta el tamaño total de la variable var, es decir, involucra también el arreglo de 20 carácteres que continúa a la variable de tipo \verb+struct T+.
+	
+	Por el contrario, si se compila con \verb+-D_FORTIFY_SOURCE=2+, el objeto se analiza con mayor profundidad, y se detectará el overflow.
+	
+	Por otro lado, el segundo nivel de FORTIFY\_SOURCE tiene en cuenta las funciones de formato de strings, como \verb+printf()+, en los casos en los que se usa el parámetro \verb+%n+, el cual es muy usado en ataques de format string. Por ello, solo se permite el uso de dicho parámetro cuando el mismo está contenido en una sección estática de memoria. En los ataques de format string, la cadena de formato estará contenida en alguna sección escribible por el atacante.
+	
+\section{Stack Protector}
+	
+	El Stack Protector de GCC es una herramienta que modifica el c\'odigo generado de forma tal que un buffer overflow en el stack pueda ser detectado y la aplicaci\'on aborte para no permitir que la vulnerabilidad sea explotada.
+	
+	Una variable guardia o canario es introducida en el c\'odigo. Esta t\'ecnica fue originalmente presentada en el proyecto StackGuard, y estaba dise\~nada para posicionar la variable guardia inmediatamente despues de la direcci\'on de retorno. La diferencia con el m\'etodo utilizado en el Stack Protector es la locaci\'on de la variable y la protecci\'on para punteros a funciones. La variable es situada luego del puntero al frame anterior, y antes de un arreglo. 
+	
+	Para ilustrar el funcionamiento del Stack Protector se mostrar\'a un ejemplo en c\'odigo C. La protecci\'on es llevada a cabo en el middle-end de GCC, por lo que se trabaja sobre el lenguaje GIMPLE.
+	
+	Dado el c\'odigo de una funci\'on, un preprocesado insertar\'a c\'odigo en las locaciones correspondientes a la declaraci\'on de las variables locales, el punto de entrada donde se definir\'a el valor del canario, y el punto de salida donde se corroborar\'a que el valor del canario sea el original, si no lo es, el programa abortar\'a.
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+	...
+	// variables locales
+	volatile int guard;
+	
+	...
+	// punto de entrada
+	guard = guard_value;
+	
+	...
+	// punto de salida
+	if(guard != guard_value) {
+		printf("Stack overflow detected\n");
+		abort();
+	}
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	La funci\'on de ejemplo:
+	
+	\vspace{5 mm}
+	
+	\begin{lstlisting}
+void bar( void (*func1)() ) {
+	void (*func2)();
+	char buf[128];
+	...
+	strcpy(buf, getenv("HOME"));
+	(*func1)();
+	(*func2)();
+}
+	\end{lstlisting}
+	
+	\vspace{5 mm}
+	
+	En esta funci\'on, la declaraci\'on del canario se realizaria justo antes de la declaraci\'on del arreglo de car\'acteres, y la corroboraci\'on del canario ser\'a realizada justo despues de la llamada a $(*func2)()$. Esta forma de analizar el funcionamiento tiene algunos problemas, particularmente el hecho de que una funci\'on t\'ipica escrita en lenguaje C posee varias sentencias de retorno a lo largo de toda la funci\'on, por lo que habr\'ia que introducir el c\'odigo del punto de salida justo antes de cada $return$. Como ya se explic\'o, la implementaci\'on real de la protecci\'on fue programada para operar sobre el lenguaje intermedio que utiliza GCC, en el cual existe \'unicamente un punto de salida de la misma, y el orden final de las variables ya ha sido establecido.
+	
+	El requerimieto principal de la variable guardia es que posea un valor que el atacante no sepa. Si lo supiera, el atacante puede llenar el stack entre el buffer y el puntero al frame anterior con el valor del canario. Con lo cual saltear\'ia el test en el punto de salida y podria potencialmente tomar control de la aplicaci\'on.
+	
+	Stack Protector elije el valor del canario de forma aleatoria. Este n\'umero es calculado en el momento de inicializaci\'on de la aplicaci\'on, el cual no puede ser divisado por un usuario no privilegiado. Para que el n\'umero sea lo m\'as impredecible posible, se utiliza el generador de n\'umeros aleatorios prove\'ido por Linux, cuya interfaz se presenta a trav\'es del dispositivo $/dev/urandom$ o $/dev/random$. Este utiliza la actividad del entorno actual del sistema operativo para generar el n\'umero.
+	
+	Otra posibilidad es definir el canario con un byte nulo (0x00), ya que todos los overflows en el stack son a trav\'es de cadenas de car\'acteres y estas poseen como car\'acter terminal el 0x00. Aun cuando el valor del canario sea conocido, cuando el atacante trate de escribir en el buffer el valor del canario para que el overflow no sea detectado, la cadena ser\'a terminada justo al escribir el byte nulo y no se podr\'a proceder con el posterior explotado de la aplicaci\'on.
+	
+	En un principio, los ataques de overflow en el stack se realizaban \'unicamente para sobreescribir la direcci\'on de retorno. Esta parte fue el objetivo del proyecto StackGuard, que luego se demostro obsoleto ya que no solo la direcci\'on de retorno era un dato importante dentro de la funci\'on, sino que tambi\'en lo eran otros datos internos, como punteros a funciones. Stack Protector, para solucionar este tipo de casos defini\'o el concepto de ``modelo de funci\'on segura''. No es un modelo sin posibilidad de errores, pero protege muchos casos que otros m\'etodos no abarcan.
+	
+	La idea de este modelo es limitar el uso del stack de manera que la locaci\'on A no contenga ningun arreglo ni variables de tipo puntero, la locaci\'on B tiene arreglos o estructuras que contienen arreglos, y la locaci\'on C no tiene arreglos.
+	
+	\begin{center}
+	\begin{tabular}{ r | c | l }
+		&&\\ \cline{2-2}
+		& argumentos (A) & \\ \cline{2-2}
+		& direcci\'on de retorno & \\ \cline{2-2}
+		frame pointer $\rightarrow$ & puntero al frame anterior & \\ \cline{2-2}
+		&canario & \\ \cline{2-2}
+		&arreglos (B) & \\ \cline{2-2}
+		&variables locales (C) & \\ \cline{2-2}
+		stack pointer $\rightarrow$ && $\downarrow$ \\
+	\end{tabular}
+	\end{center}
+	
+	De esta forma, la locaci\'on B es el \'unico punto vulnerable donde un ataque puede comenzar a modificar el stack.
+	
+	Este modelo hace que las locaciones fuera del frame de una funci\'on no puedan ser da\~nadas cuando la funci\'on retorna, ataques a variables de tipo puntero fuera del frame de la funci\'on no ser\'an exitosos, y por \'ultimo, un ataque a las variables de tipo puntero dentro del frame de la funci\'on tampoco ser\'a exitoso. Todo gracias a que la distribuci\'on de los datos har\'an que la variable canario detecte el ataque cuando se llegue al punto de salida.
+	
+	\subsection{Problemas}
+	
+	Si bien Stack protector previene la ejecución de código arbitrario, el overflow ocurre de todas formas, y existe un bug de ``information leak''. Veamoslo con un ejemplo, tomemos la siguiente aplicación:
+	
+	\begin{lstlisting}
+	#include <stdio.h>
+	#include <string.h>
+	
+	char *cadena = "Esto es un secreto";
+	
+	int main(int argc, char **argv) {
+		char buf[32];
+		strcpy(buf, argv[1]);
+		
+		return 0;
+	}
+	\end{lstlisting}
+
+	Lo compilamos con \verb+-fstack-protector+ para habilitar esta feature. Y utilizando la herramienta \verb+objdump+ encontramos la ubicación de \verb+cadena+ en \verb+0x08048568+.
+	
+	Primero veamos que sucede cuando sobrecargamos el buffer y se sobreescribe el canario:
+	
+	\begin{lstlisting}
+chiiph@adell ~/src/tesis/tmp $ ./ssp $(python -c "print 'A'*200")
+*** stack smashing detected ***: ./ssp terminated
+======= Backtrace: =========
+/lib/libc.so.6(__fortify_fail+0x50)[0xb767f6c0]
+/lib/libc.so.6(+0xe566a)[0xb767f66a]
+./ssp[0x8048495]
+[0x41414141]
+======= Memory map: ========
+08048000-08049000 r-xp 00000000 08:06 649532     /home/chiiph/src/tesis/tmp/ssp
+08049000-0804a000 r--p 00000000 08:06 649532     /home/chiiph/src/tesis/tmp/ssp
+0804a000-0804b000 rw-p 00001000 08:06 649532     /home/chiiph/src/tesis/tmp/ssp
+0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
+b757e000-b7597000 r-xp 00000000 08:06 370407     /usr/lib/gcc/i686-pc-linux-gnu/4.5.2/libgcc_s.so.1
+b7597000-b7598000 r--p 00018000 08:06 370407     /usr/lib/gcc/i686-pc-linux-gnu/4.5.2/libgcc_s.so.1
+b7598000-b7599000 rw-p 00019000 08:06 370407     /usr/lib/gcc/i686-pc-linux-gnu/4.5.2/libgcc_s.so.1
+b7599000-b759a000 rw-p 00000000 00:00 0 
+b759a000-b76f2000 r-xp 00000000 08:06 447557     /lib/libc-2.12.2.so
+b76f2000-b76f4000 r--p 00158000 08:06 447557     /lib/libc-2.12.2.so
+b76f4000-b76f5000 rw-p 0015a000 08:06 447557     /lib/libc-2.12.2.so
+b76f5000-b76f8000 rw-p 00000000 00:00 0 
+b7708000-b7709000 rw-p 00000000 00:00 0 
+b7709000-b770a000 r-xp 00000000 00:00 0          [vdso]
+b770a000-b7726000 r-xp 00000000 08:06 448778     /lib/ld-2.12.2.so
+b7726000-b7727000 r--p 0001b000 08:06 448778     /lib/ld-2.12.2.so
+b7727000-b7728000 rw-p 0001c000 08:06 448778     /lib/ld-2.12.2.so
+bfbf3000-bfc14000 rw-p 00000000 00:00 0          [stack]
+Aborted
+	\end{lstlisting}
+	
+	La aplicación aborta y nos muestra un backtrace y un mapa de la memoria. Ahora veamos que sucede si cambiamos el contenido del buffer a la dirección de la cadena, y lo sobreescribimos un poco más allá:
+	
+	\begin{lstlisting}
+chiiph@adell ~/src/tesis/tmp $ ./ssp $(python -c "print '\x68\x85\x04\x08'*55")
+*** stack smashing detected ***: Esto es un secreto terminated
+======= Backtrace: =========
+/lib/libc.so.6(__fortify_fail+0x50)[0xb77bb6c0]
+/lib/libc.so.6(+0xe566a)[0xb77bb66a]
+Esto es un secreto[0x8048495]
+Esto es un secreto[0x8048568]
+======= Memory map: ========
+08048000-08049000 r-xp 00000000 08:06 649532     /home/chiiph/src/tesis/tmp/ssp
+08049000-0804a000 r--p 00000000 08:06 649532     /home/chiiph/src/tesis/tmp/ssp
+0804a000-0804b000 rw-p 00001000 08:06 649532     /home/chiiph/src/tesis/tmp/ssp
+0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
+b76ba000-b76d3000 r-xp 00000000 08:06 370407     /usr/lib/gcc/i686-pc-linux-gnu/4.5.2/libgcc_s.so.1
+b76d3000-b76d4000 r--p 00018000 08:06 370407     /usr/lib/gcc/i686-pc-linux-gnu/4.5.2/libgcc_s.so.1
+b76d4000-b76d5000 rw-p 00019000 08:06 370407     /usr/lib/gcc/i686-pc-linux-gnu/4.5.2/libgcc_s.so.1
+b76d5000-b76d6000 rw-p 00000000 00:00 0 
+b76d6000-b782e000 r-xp 00000000 08:06 447557     /lib/libc-2.12.2.so
+b782e000-b7830000 r--p 00158000 08:06 447557     /lib/libc-2.12.2.so
+b7830000-b7831000 rw-p 0015a000 08:06 447557     /lib/libc-2.12.2.so
+b7831000-b7834000 rw-p 00000000 00:00 0 
+b7844000-b7845000 rw-p 00000000 00:00 0 
+b7845000-b7846000 r-xp 00000000 00:00 0          [vdso]
+b7846000-b7862000 r-xp 00000000 08:06 448778     /lib/ld-2.12.2.so
+b7862000-b7863000 r--p 0001b000 08:06 448778     /lib/ld-2.12.2.so
+b7863000-b7864000 rw-p 0001c000 08:06 448778     /lib/ld-2.12.2.so
+bf88c000-bf8ad000 rw-p 00000000 00:00 0          [stack]
+Aborted
+	\end{lstlisting}
+	
+	Podemos ver como lo que antes era \verb+./ssp+ ahora se convirtió en el contenido del string. Esto sucedió porque para armar el mensaje de salida cuando la aplicación aborta utiliza \verb+argv[0]+ para saber el nombre de la aplicación en cuestión. Este dato se almacena en el stack, junto con el resto de los parámetros. Con nuestro overflow sobreescribimos el puntero con el de la cadena ``secreta'' dentro de la aplicación vulnerable.
+	
+\section{Mudflap}
+
+	Mudflap es una pasada del compilador GCC, que es aplicada luego de la pasada de parseo del c\'odigo y antes de las optimizaciones y los backends, es decir, trabaja sobre los \'arboles SSA internos de GCC. Busca patrones de anidamiento en el \'arbol que correspondan a operaciones que involucran punteros potencialmente peligrosas. Estas estructuras son reemplazadas con expresiones que evaluan al mismo valor que la estructura anterior, pero que agrega partes que refieren a la $libmudflap$. El compilador, a su vez, agrega c\'odigo asociado con variables locales.
+	
+	Este c\'odigo agregado tiene como prop\'osito evaluar la validez de la utilizaci\'on de un puntero derreferenciado. Esta evaluaci\'on implica simplemente determinar si la memoria referencia por dicho puntero corresponde a un valor v\'alido en el espacio de memoria del proceso. En caso de no ser asi, se ha detectado un potencial ataque a la aplicaci\'on.
+	
+	Para evaluar si un acceso a memoria es v\'alido, la biblioteca necesita mantener una ``base de datos'' de objetos v\'alidos en memoria. Esta base de datos almacena muchos datos acerca de cada objeto de memoria, y puede que los guarde aun luego de haber liberado el mismo. Entre ellos se guardan el rango de direcciones del objeto, el nombre, el archivo de c\'odigo donde es declarado y la linea, lugar donde se almacena (stack, heap, etc), estad\'isticas de acceso, y estampillas de tiempo. Con el objetivo de actualizar y buscar objetos en la base de datos, libmudflap exporta funciones que ser\'an utilizadas por el c\'odigo insertado en la pasada de compilaci\'on. Entre estas funciones, las m\'as b\'asicas son para evaluar accesos a memoria, para agregar o eliminar objetos de la base de datos. La base de datos es almacenada como un \'arbol binario, ordenado seg\'un la direcci\'on de los objetos actualmente referenciados por la aplicaci\'on. Para mantener objetos ``populares'' lo m\'as cerca de la ra\'iz posible, peri\'odicamente el \'arbol es reordenado. 
+	
+	Durante el comienzo de la ejecuci\'on de una aplicaci\'on, unos objetos son insertados a la base de datos como objetos especiales de ``no acceso''. Estos representan rangos de direcciones que son certeramente direcciones fuera del rango de la aplicaci\'on.
+	
+	Para optimizar las b\'usquedas en la base de datos, libmudflap mantiene una cache de b\'usqueda. Esta cache es un arreglo compacto de mapeo directo, indexado por una funci\'on hash que recibe el valor del puntero al objeto buscado. 
+	
+	Expresiones potencialmente inseguras que involucren punteros son f\'aciles de divisar en c\'odigo C/C++. Expresiones del estilo de \verb *p, \verb p->f, \verb p[a], deben ser evaluadas. Como mudflap opera en medio de la compilaci\'on, no puede buscar estos patrones. En cambio, utiliza la representaci\'on interna similar a la de un \'arbol de sintaxis, codificada a trav\'es de la estructura tree de GCC.
+	
+	Mudflap recorre el \'arbol que representa cada funci\'on en busca de ciertas estructuras relacionadas con uso de punteros o arreglos. Estos nodos del \'arbol son modificados, reemplazando la expresi\'on simple del puntero con una m\'as compleja que realiza las verificaci\'ones ya descriptas. A modo de ejemplo, la expresi\'on p->f se transforma, a grandes razgos, en ({check (p, ...); p;})->f.
+	
+	Esta modificaci\'on, al realizarse ``in-place'', soporta derreferenciamiento anidado del estilo de \verb+p->array[i]->f+, analizando primero la referencia \verb+p->array[i]+ y luego \verb+array[i]+\- \verb+->f+.
+	
+	Mudflap, como ya se explic\'o, opera sobre la etapa de compilaci\'on de una aplicaci\'on. Sin embargo, en general no es posible recompilar una aplicaci\'on completamente junto con todas las bibliotecas del sistema que necesita, lo que implica que muchas partes de la aplicaci\'on pueden ser vulnerables a pesar de la utilizaci\'on de esta herramienta.
+	
+	La mayor\'ia de las aplicaciones C/C++ utilizan llamadas a funciones de bibliotecas externas. Tomemos por ejemplo la funci\'on $strcpy$. Generalmente estas bibliotecas no han sido compiladas con mudflap, y por ende no realizan ninguno de los checkeos ya discutidos. Una aplicaci\'on puede utilizar punteros inv\'alidos como par\'ametros a strcpy y de esa forma saltear las protecciones que se cree que mudflap esta proporcionando. Para solventar esto, libmudflap provee wrappers a muchas funciones populares, a trav\'es de directivas del preprocesador para que puedan ser utilizadas de forma transparente, y a trav\'es de ellas, de forma segura.
+	
+	Otra situaci\'on de conflicto involucra el uso de bibliotecas que devuelvan, a alguna funci\'on en la aplicaci\'on en cuesti\'on, memoria reservada en un heap compartido. Estas regiones de memoria deben ser registradas por libmudflap para lograr evaluar con \'exito las referencias de punteros a esas locaciones externas. Interceptar llamadas a $malloc$ usando directivas del preprocesador no es posible en este caso, ya que la biblioteca ya ha sido compilada sin el soporte de mudflap. Estas llamadas deben ser interceptadas en tiempo de linkeo. Para ello, existen diversos mecanismos como por ejemplo $symbol wrapping$ cuando se trata de enlazado est\'atico, o $symbol interposition$ para enlazado din\'amico.
+	
+	En otros casos, puede suceder que una biblioteca no protegida por libmudflap le devuelve a la aplicaci\'on protegida un putero a una secci\'on v\'alida de memoria est\'atica en la biblioteca. En este caso, ninguna de las t\'ecnicas de intercepci\'on en tiempo de linkeo sirven, ya que estas secciones de memoria no son reservadas con ninguna funci\'on del sistema. Para establecer si dichos punteros son v\'alidos, libmudflap usa un m\'etodo heur\'istico. Esta her\'istica es utilizada cada vez que un acceso a memoria es considerado una violaci\'on, y utiliza informaci\'on dependiente de la plataforma como l\'imites de los segmentos del proceso, stack pointer, etc.

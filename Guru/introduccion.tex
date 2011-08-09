@@ -1,0 +1,46 @@
+\chapter{Introducción}
+\section{Contexto actual}
+
+En la actualidad los ataques de los que m\'as se ven noticias son los que act\'uan principalmente sobre aplicaciones web, a trav\'es de t\'ecnicas como SQL Injection, Cross Site Scripting (XSS), Distributed Denial of Service (DDoS), etc. 
+
+M\'as alla de la t\'ecnica usada en los ataques, los objetivo siempre suelen ser los mismos: obtener informaci\'on, robar identidad, robo de dinero (tambi\'en relacionado con el robo de identidad), y actualmente se ven tambi\'en ataques con el mero objetivo de protesta.
+
+Por otro lado, y no de forma tan p\'ublica, existe un grave problema: las botnets. Las botnets son redes de computadoras controladas por un software aut\'onomo. Si bien el t\'ermino se puede aplicar a muchos tipos de \'ambitos computacionales, en general est\'a ligado a redes de computadoras que han sido tomadas por alg\'un tipo de malware sin que el due\~no de la computadora lo note y son usadas para enviar spam o realizar ataques DDoS. La ganancia monetaria de las botnets viene dada a trav\'es de las empresas o personas que rentan tiempo de la misma para publicitar sus productos o servicios a trav\'es del spam.
+
+La pregunta que puede surgir es: ¿C\'omo nacen las botnets?. Como en todo lo referido a seguridad, un sistema es tan fuerte como su eslabon m\'as debil, y esto siempre ocurre cuando existe el factor humano. El software llamado ``malware'' puede ingresar en una computadora v\'ictima de muchas maneras, una forma muy com\'un es enga\~nando al usuario a instalar la aplicaci\'on maliciosa, y otra es a trav\'es del explotado de vulnerabilidades en el sistema operativo, o en aplicaciones que corren en \'el y no son propiamente protegidas por el mismo. Si bien pueden existir problemas de seguridad tanto en la capa de aplicaci\'on como en la capa del sistema operativo, existe una relaci\'on impl\'icita, en cierto sentido, en las herramientas que tiene el sistema operativo para defender una aplicaci\'on mal programada en caso de un ataque. 
+
+Dado que el problema que proviene del fator humano resulta muy complejo de tratar, en general se tratan soluciones o mejoras para el otro aspecto del problema: el sistema operativo. Un malware puede acceder y tomar control de la computadora a trav\'es del explotado de buffer overflow en el stack, o en el heap, y si el sistema operativo residente no posee formas de contingencia de ese problema entonces no existen l\'imites para el atacante.
+
+Desde 1996, a\~no en el cual Aleph1 public\'o su art\'iculo ``Smashing the stack for fun and profit'' en la revista electr\'onica Phrack, las t\'ecnicas de explotado de vulnerabilidades han evolucionado r\'apidamente. Contrario a lo que se puede esperar, el hecho de que las vulnerabilidades se hagan cada vez m\'as p\'ublicas no ha llevado a que los desarrolladores de software sean realmente conscientes de estos problemas, y programen para evitarlos.
+
+Dada esta realidad, sistemas operativos como GNU/Linux han desarrollado a lo largo del tiempo distintas formas de protecci\'on ``impl\'icita'' que opere sobre las aplicaciones vulnerables. En este trabajo se tratar\'an de explicar de qu\'e tratan las t\'ecnicas m\'as efectivas de protecci\'on y c\'omo operan para lograr su objetivo.
+
+\section{Estructura del trabajo}
+
+	\begin{itemize}
+	\item \textbf{Cap\'itulo 1}: Introducci\'on
+	
+	Explicaci\'on b\'asica de la idea detr\'as del presente trabajo.
+	
+	\item \textbf{Cap\'itulo 2}: Problemas b\'asicos de seguridad
+	
+	En este cap\'itulo se introducir\'an las ideas b\'asicas detr\'as de los problemas de seguridad del software m\'as comunes: buffer overflows en el stack y el heap.
+	
+	\item \textbf{Cap\'itulo 3}: Protecciones est\'aticas
+	
+	Dentro de las protecciones, se puede realizar una clasificaci\'on en ``est\'aticas'' y ``din\'amicas''. Las est\'aticas involucran aquellas protecciones que son compiladas dentro del ejecutable final de la aplicaci\'on, y son las tratadas en este cap\'itulo.
+	
+	\item \textbf{Cap\'itulo 4}: Protecciones din\'amicas
+	
+	Las protecciones din\'amicas son aquellas que, si bien han sido compiladas y son est\'aticas en cierta forma, existen m\'as alla de c\'omo se haya compilado la aplicaci\'on vulnerable, ya sea porque residen en el kernel del sistema, o porque forman parte de una biblioteca enlazada din\'amicamente.
+	
+	\item \textbf{Cap\'itulo 5}: Conclusiones
+	
+	Delineadas las protecciones m\'as comunes y efectivas de GNU/Linux, en este cap\'itulo se presenta una conclusi\'on acerca del panorama actual.
+	
+	\end{itemize}
+
+
+\section{Aclaraciones}
+
+Todos los ejemplos presentados en este documento son compilados y ejecutados en un entorno Gentoo Linux i686 con gcc-4.4.4.
