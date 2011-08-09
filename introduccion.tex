@@ -1,36 +1,59 @@
 \chapter{Introducción}
-\section{Contexto actual}
 
-El objetivo de este plan de trabajo está enfocado en la aplicación de Argumentación y diálogos en Sistemas Multiagentes orientados a juegos.\\
-Un agente inteligente es una entidad que puede realizar ejecuciones de acciones en forma autónoma, puede percibir su entorno, incluyendo el efecto de sus acciones, y puede modificar su accionar en función de esta percepción. En los sistemas multiagente, un agente participa en diálogos con otros agentes del mismo ambiente. Esta interacción entre agentes inteligentes es actualmente un área de estudio intensivo.\\
-La argumentación rebatible es un mecanismo de razonamiento no monótono en donde la aceptación o el rechazo de una proposición dependen de un análisis entre argumentos a favor y en contra de esa proposición. Usualmente es utilizada bajo diferentes formalizaciones para capturar aspectos del razonamiento del sentido común y la representación de información incompleta y potencialmente inconsistente.\\
-El objetivo particular de este proyecto es la aplicación de Argumentación para la implementación de diálogos entre agentes inmersos en un escenario con objetivos determinados. Puntualmente, se enfocará la investigación a la plataforma propuesta en el Multi-Agent Programming Contest, un juego académico donde agentes independientes compiten por diferentes objetivos.\\
-Actualmente los agentes tienen un campo de aplicación muy amplio y existen muchos tipos de agentes diferentes (por ejemplo: reactivos, deliberativos, inteligentes, de interface, colaborativos, etc.) los cuales a su vez están orientados a distintos entornos de aplicación. Los agentes evolucionaron de los sistemas multiagente los cuales a su vez provienen de las áreas de Inteligencia Artificial Distribuida, Resolución de Problemas Distribuidos, e Inteligencia Artificial Paralela.  En la actualidad existe un gran número de formalismos teóricos orientados a describir arquitecturas de agentes. Sin embargo, el desarrollo de herramientas para implementar tales formalismos se encuentra en progreso y a un paso más lento. Además, muchas de las herramientas disponibles carecen de una base formal y suelen ser simplemente un entorno de desarrollo amigable.\\
-En la mayoría de los casos, los agentes no existen por sí solos, sino que participan de un Sistema Multi-Agente (SMA). En un SMA, varios agentes interactúan para conseguir algún objetivo o realizar alguna tarea común. En este tipo de sistemas, cada agente tiene información incompleta y capacidades limitadas, el control del sistema es distribuido, los datos están descentralizados, y la computación es asincrónica. Además, los agentes se desenvuelven en un entorno dinámico y cambiante, el cual no puede predecirse y se ve afectado por las acciones que son llevadas a cabo por los agentes y también por humanos.\\
-Un aspecto importante en SMA es la comunicación entre agentes, la cual puede ser necesaria para que los agentes compitan o cooperen de acuerdo a sus metas individuales.
+\section{Enunciado}
 
+El objetivo de este trabajo es presentar en detalle el sistema de resolución de conflictos utilizado en el marco de MAPC 2011\footnote{Multi-Agent Programming Contest 2011 - http://www.multiagentcontest.org/}, la representación de la base de conocimiento utilizada para ello, las decisiones de diseño e implementación tomadas, sus fortalezas, debilidades, y posibilidades de trabajo a futuro para mejorarlo.
 
-\section{Estructura del trabajo}
+\section{Multi-Agent Programming Contest}
+El \textit{Multi-Agent Programming Contest} es un concurso de programación de Inteligencia Artificial iniciado en el año 2005 con el objetivo de estimular la investigación en el área de desarrollo y programación de Sistemas Multi-Agente. Para ello, la competencia propone diferentes escenarios de juego de manera anual, que obligan a los participantes tanto a identificar y resolver problemas clave, como a explorar lenguajes, plataformas y herramientas de programación para Sistemas Multi-Agente.
 
-	\begin{itemize}
-	\item \textbf{Capítulo 1}: Introducción
-	
-	Contiene la información básica y a alto nivel del contenido del trabajo.
-	
-	\item \textbf{Capítulo 2}: Definiciones
-	
-	Contiene las definiciones de los conceptos utilizados a lo largo del trabajo.
-	
-	\item \textbf{Capítulo 3}: Something something
-	
-	Contiene texto (!).
-	
-	\item \textbf{Capítulo 4}: Something MORE
-	
-	Contiene aún más texto.
-	
-	\item \textbf{Capítulo 5}: Conclusiones
-	
-	A partir del análisis en los capítulos anteriores, delimitamos los resultados del trabajo.
-	
-	\end{itemize}
+\subsection{Escenario MAPC 2011}
+
+El escenario del año 2011 está formado por el mapa de un planeta representado mediante un grafo. Cada nodo del grafo es una locación válida (y tiene un valor determinado), y existen arcos (con diferente costo de energía) que permiten a un agente desplazarse de una locación a otra.\\
+En cada ronda de la competición participan dos equipos rivales. Cada equipo posee un conjunto de agentes con diferentes roles preestablecidos (Explorador, Saboteador, Reparador, Sentinela e Inspector). El rol de cada agente define tanto el conjunto de acciones que puede realizar, como sus características físicas (Energía, Salud, Rango de Visión).\\
+\subsubsection{Puntaje}
+La simulación del juego se desarrolla por pasos, y en cada paso se otorga a los equipos una determinada cantidad de puntos según el estado de la simulación. El objetivo del juego es obtener la mayor cantidad de puntos posibles cuando la simulación termina.\\
+Para obtener puntos, los agentes de cada uno de los equipos deben lograr formar \textit{"`zonas"'} en el mapa logrando posicionarse en diferentes locaciones de manera estratégica. La predominancia de un equipo sobre el otro en los nodos es determinada por un algoritmo bien definido para la competencia, y el valor de todos los nodos dominados por un equipo es el principal factor del puntaje otorgado en cada uno de los pasos de la simulación. Algunas otras situaciones, como el logro de determinados \textit{achievements}, pueden otorgar puntos adicionales al equipo.
+\subsubsection{Acciones}
+Todos los agentes tienen acciones en común que pueden realizar en cada uno de los pasos de la simulación:
+\begin{itemize}
+	\item goto(X):
+	\item survey(X):
+	\item recharge:
+\end{itemize}
+
+\subsubsection{Toma de decisiones y motivación para la resolución de conflictos}
+A diferencia de los años anteriores, esta competencia apunta a lograr un buen Sistema Multi-Agente puramente distribuido; esto significa que cada agente debe realizar su propio proceso de toma de decisiones por su cuenta, en lugar de contar con una inteligencia centralizada que decida cuál será la acción a realizar para cada uno de los agentes.\\Dado que cada agente decide por separado qué acción tomar, muchas veces ocurre que dos (o más) de los agentes del mismo equipo realizan acciones que resultan redundantes, peligrosas, y en el peor de los casos, perjudiciales al combinarse. Es por este motivo que se debió trabajar en un mecanismo de manera tal que los agentes pudieran tomar una decisión sobre su acción, comunicarla con sus compañeros, y una vez que conoce qué es lo que harán sus compañeros, reconsiderar su propia decisión.
+
+%Un agente inteligente es una entidad que puede realizar ejecuciones de acciones en forma autónoma, puede percibir su entorno, incluyendo el efecto de sus acciones, y puede modificar su accionar en función de esta percepción. En los sistemas multiagente, un agente participa en diálogos con otros agentes del mismo ambiente. Esta interacción entre agentes inteligentes es actualmente un área de estudio intensivo.\\
+%La argumentación rebatible es un mecanismo de razonamiento no monótono en donde la aceptación o el rechazo de una proposición dependen de un análisis entre argumentos a favor y en contra de esa proposición. Usualmente es utilizada bajo diferentes formalizaciones para capturar aspectos del razonamiento del sentido común y la representación de información incompleta y potencialmente inconsistente.\\
+%El objetivo particular de este proyecto es la aplicación de Argumentación para la implementación de diálogos entre agentes inmersos en un escenario con objetivos determinados. Puntualmente, se enfocará la investigación a la plataforma propuesta en el Multi-Agent Programming Contest, un juego académico donde agentes independientes compiten por diferentes objetivos.\\
+%Actualmente los agentes tienen un campo de aplicación muy amplio y existen muchos tipos de agentes diferentes (por ejemplo: reactivos, deliberativos, inteligentes, de interface, colaborativos, etc.) los cuales a su vez están orientados a distintos entornos de aplicación. Los agentes evolucionaron de los sistemas multiagente los cuales a su vez provienen de las áreas de Inteligencia Artificial Distribuida, Resolución de Problemas Distribuidos, e Inteligencia Artificial Paralela.  En la actualidad existe un gran número de formalismos teóricos orientados a describir arquitecturas de agentes. Sin embargo, el desarrollo de herramientas para implementar tales formalismos se encuentra en progreso y a un paso más lento. Además, muchas de las herramientas disponibles carecen de una base formal y suelen ser simplemente un entorno de desarrollo amigable.\\
+%En la mayoría de los casos, los agentes no existen por sí solos, sino que participan de un Sistema Multi-Agente (SMA). En un SMA, varios agentes interactúan para conseguir algún objetivo o realizar alguna tarea común. En este tipo de sistemas, cada agente tiene información incompleta y capacidades limitadas, el control del sistema es distribuido, los datos están descentralizados, y la computación es asincrónica. Además, los agentes se desenvuelven en un entorno dinámico y cambiante, el cual no puede predecirse y se ve afectado por las acciones que son llevadas a cabo por los agentes y también por humanos.\\
+%Un aspecto importante en SMA es la comunicación entre agentes, la cual puede ser necesaria para que los agentes compitan o cooperen de acuerdo a sus metas individuales.
+%
+%
+%\section{Estructura del trabajo}
+%
+%	\begin{itemize}
+%	\item \textbf{Capítulo 1}: Introducción
+%	
+%	Contiene la información básica y a alto nivel del contenido del trabajo.
+%	
+%	\item \textbf{Capítulo 2}: Definiciones
+%	
+%	Contiene las definiciones de los conceptos utilizados a lo largo del trabajo.
+%	
+%	\item \textbf{Capítulo 3}: Something something
+%	
+%	Contiene texto (!).
+%	
+%	\item \textbf{Capítulo 4}: Something MORE
+%	
+%	Contiene aún más texto.
+%	
+%	\item \textbf{Capítulo 5}: Conclusiones
+%	
+%	A partir del análisis en los capítulos anteriores, delimitamos los resultados del trabajo.
+%	
+%	\end{itemize}
