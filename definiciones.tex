@@ -1,0 +1,19 @@
+\chapter{Definiciones}
+En este capítulo se revisarán algunas definiciones de conceptos técnicos, para posteriormente utilizarlos con tranquilidad en el resto de la presentación.
+
+\section*{Agente}
+Un agente es una entidad computacional autónoma, que puede percibir su entorno a través de sensores, y actuar en dicho entorno utilizando efectores. Usualmente, la información que un agente percibe de su entorno es sólo parcial.
+\section*{Sistema Multi-Agente}
+Es un sistema en el cual muchos agentes interactúan para conseguir algún objetivo o realizar alguna tarea.
+\section*{Inteligencia Artificial Distribuida}
+Es el estudio, construcción y aplicación de Sistemas Multi-Agente
+\section*{Arquitectura BDI}
+El modelo BDI (\textit{Belief-Desire-Intentions}) es tanto una teoría como una arquitectura de agentes. Un agente BDI posee un conjunto de \textbf{creencias}, un conjunto de \textbf{deseos}, y otro de \textbf{intenciones}. Las intenciones representan un conjunto de alternativas que el agente posee para alcanzar sus metas, y tienen la propiedad de ser \textbf{persistentes}; el agente mantiene todas sus intenciones hasta que logre cumplirlas, o bien se de cuenta de que \textit{no} podrá cumplirlas, o bien, por algún otro motivo, las razones que tuvo para adoptar por primera vez a la intención dejaron de ser válidas.\\
+A grandes rasgos, la arquitectura BDI propone que el agente:
+\begin{enumerate}
+	\item Perciba los cambios del entorno en el que se desenvuelve.
+	\item Revise sus creencias del mundo en base a la percepción.
+	\item Razone acerca de sus intenciones para reconsiderarlas, de ser necesario.
+	\item Seleccione una acción a seguir, razonando sobre sus creencias e intenciones.
+	\item Ejecute la acción seleccionada, y vuelva al primer paso.
+\end{enumerate}

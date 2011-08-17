@@ -10,7 +10,7 @@ El \textit{Multi-Agent Programming Contest} es un concurso de programación de In
 \subsection{Escenario MAPC 2011}
 
 El escenario del año 2011 está formado por el mapa de un planeta representado mediante un grafo. Cada nodo del grafo es una locación válida (y tiene un valor determinado), y existen arcos (con diferente costo de energía) que permiten a un agente desplazarse de una locación a otra.\\
-En cada ronda de la competición participan dos equipos rivales. Cada equipo posee un conjunto de agentes con diferentes roles preestablecidos (Explorador, Saboteador, Reparador, Sentinela e Inspector). El rol de cada agente define tanto el conjunto de acciones que puede realizar, como sus características físicas (Energía, Salud, Rango de Visión).\\
+En cada ronda de la competición participan dos equipos rivales. Cada equipo posee un conjunto de agentes con diferentes roles preestablecidos (\textit{Explorador}, \textit{Saboteador}, \textit{Reparador}, \textit{Sentinela} e \textit{Inspector}). El rol de cada agente define tanto el conjunto de acciones que puede realizar, como sus características físicas (\textit{Energía}, \textit{Salud}, \textit{Rango de Visión}...).\\
 \subsubsection{Puntaje}
 La simulación del juego se desarrolla por pasos, y en cada paso se otorga a los equipos una determinada cantidad de puntos según el estado de la simulación. El objetivo del juego es obtener la mayor cantidad de puntos posibles cuando la simulación termina.\\
 Para obtener puntos, los agentes de cada uno de los equipos deben lograr formar \textit{"`zonas"'} en el mapa logrando posicionarse en diferentes locaciones de manera estratégica. La predominancia de un equipo sobre el otro en los nodos es determinada por un algoritmo bien definido para la competencia, y el valor de todos los nodos dominados por un equipo es el principal factor del puntaje otorgado en cada uno de los pasos de la simulación. Algunas otras situaciones, como el logro de determinados \textit{achievements}, pueden otorgar puntos adicionales al equipo.
@@ -20,8 +20,14 @@ Todos los agentes tienen acciones en común que pueden realizar en cada uno de lo
 	\item goto(X):
 	\item survey(X):
 	\item recharge:
+	...
 \end{itemize}
-
+Por otro lado, cada rol posee acciones particulares que lo diferencian del resto, y deben ser utilizadas estratégicamente para el beneficio del equipo:
+\begin{itemize}
+	\item Explorador: cuenta con las acciones particulares....
+	\item Saboteador: cuenta con las acciones particulares....
+	...
+\end{itemize}
 \subsubsection{Toma de decisiones y motivación para la resolución de conflictos}
 A diferencia de los años anteriores, esta competencia apunta a lograr un buen Sistema Multi-Agente puramente distribuido; esto significa que cada agente debe realizar su propio proceso de toma de decisiones por su cuenta, en lugar de contar con una inteligencia centralizada que decida cuál será la acción a realizar para cada uno de los agentes.\\Dado que cada agente decide por separado qué acción tomar, muchas veces ocurre que dos (o más) de los agentes del mismo equipo realizan acciones que resultan redundantes, peligrosas, y en el peor de los casos, perjudiciales al combinarse. Es por este motivo que se debió trabajar en un mecanismo de manera tal que los agentes pudieran tomar una decisión sobre su acción, comunicarla con sus compañeros, y una vez que conoce qué es lo que harán sus compañeros, reconsiderar su propia decisión.
 
