@@ -1,12 +1,14 @@
 \chapter{Definiciones preeliminares} % Contexto de la tesis (background formal, y contexto del desarrollo
 En este capítulo se revisarán algunas definiciones de conceptos técnicos, para posteriormente utilizarlos sin ambiguedad durante el resto de la presentación.
 
-\section*{Agente inteligente}
-Un agente es una entidad computacional autónoma, que puede percibir su entorno a través de sensores, y actuar en dicho entorno utilizando efectores. Usualmente, la información que un agente percibe de su entorno es sólo parcial. Los agentes toman decisiones a partir de la información contenida en su base de conocimiento, siguiendo diferentes conjuntos de reglas propuestas, y actúan de manera acorde a la decisión tomada. Dichas acciones, a su vez, pueden producir efectos en el entorno.\\
+\section{Agente inteligente}
+Un agente es una entidad computacional autónoma, que puede percibir su entorno a través de sensores, y actuar en dicho entorno utilizando efectores. Usualmente, la información que un agente percibe de su entorno es sólo parcial. Los agentes toman decisiones a partir de la información contenida en su base de conocimiento, siguiendo diferentes conjuntos de reglas propuestas, y actúan de manera acorde a la decisión tomada. Dichas acciones, a su vez, pueden producir efectos en el entorno.
+
 Actualmente los agentes tienen un campo de aplicación muy amplio y existen
 muchos tipos de agentes diferentes (por ejemplo: \textit{reactivos}, \textit{deliberativos},
 \textit{inteligentes}, \textit{de interface}, \textit{colaborativos}), los cuales a su vez están
-orientados a distintos entornos de aplicación.\\
+orientados a distintos entornos de aplicación.
+
 En la mayoría de los casos, los agentes no existen por sí solos, sino que participan de un Sistema Multi-Agente (SMA).
 
 %El objetivo particular de este proyecto es la aplicación de Argumentación para
@@ -20,20 +22,22 @@ En la mayoría de los casos, los agentes no existen por sí solos, sino que partic
 %amigable.\\
 
 
-\section*{Sistema Multi-Agente}
+\section{Sistema Multi-Agente}
 Es un sistema en el cual muchos agentes interactúan para conseguir algún objetivo o realizar alguna tarea común. En los
 sistemas multiagente, cada agente tiene información incompleta y capacidades limitadas, el control del sistema es distribuido,
 los datos están descentralizados, y la computación es asincrónica. Los agentes se desenvuelven en un entorno dinámico y
-cambiante, el cual no puede predecirse y se ve afectado por las acciones que son llevadas a cabo.\\
+cambiante, el cual no puede predecirse y se ve afectado por las acciones que son llevadas a cabo.
+
 Un aspecto importante en SMA es la comunicación entre agentes, la cual puede
 ser necesaria para que los agentes compitan o cooperen de acuerdo a sus metas
 individuales. Los diálogos con otros agentes del mismo ambiente son, actualmente, un área de estudio intensivo.
 
-\section*{Inteligencia Artificial Distribuida}
+\section{Inteligencia Artificial Distribuida}
 Es el estudio, construcción y aplicación de Sistemas Multi-Agente.
 
-\section*{Arquitectura BDI}
-El modelo BDI (\textit{Belief-Desire-Intentions}) es tanto una teoría como una arquitectura de agentes. Un agente BDI posee un conjunto de \textbf{creencias}, un conjunto de \textbf{deseos}, y otro de \textbf{intenciones}. Las intenciones representan un conjunto de alternativas que el agente posee para alcanzar sus metas, y tienen la propiedad de ser \textbf{persistentes}; el agente mantiene todas sus intenciones hasta que logre cumplirlas, o bien se de cuenta de que \textit{no} podrá cumplirlas, o bien, por algún otro motivo, las razones que tuvo para adoptar por primera vez a la intención dejaron de ser válidas.\\
+\section{Arquitectura BDI}
+El modelo BDI (\textit{Belief-Desire-Intentions}) es tanto una teoría como una arquitectura de agentes. Un agente BDI posee un conjunto de \textbf{creencias}, un conjunto de \textbf{deseos}, y otro de \textbf{intenciones}. Las intenciones representan un conjunto de alternativas que el agente posee para alcanzar sus metas, y tienen la propiedad de ser \textbf{persistentes}; el agente mantiene todas sus intenciones hasta que logre cumplirlas, o bien se de cuenta de que \textit{no} podrá cumplirlas, o bien, por algún otro motivo, las razones que tuvo para adoptar por primera vez a la intención dejaron de ser válidas.
+
 A grandes rasgos, la arquitectura BDI propone que el agente:
 \begin{enumerate}
 	\item Perciba los cambios del entorno en el que se desenvuelve.
@@ -42,17 +46,19 @@ A grandes rasgos, la arquitectura BDI propone que el agente:
 	\item Seleccione una acción a seguir, razonando sobre sus creencias e intenciones.
 	\item Ejecute la acción seleccionada, y vuelva al primer paso.
 \end{enumerate}
+En particular, los agentes implementados por nuestro equipo en el marco de la competencia MAPC 2011 estuvieron basados en una arquitectura BDI que será presentada en profundidad en el capítulo siguiente.
 
-\section*{Argumentación rebatible}
+\section{Argumentación rebatible}
 La argumentación rebatible es un mecanismo de razonamiento no monótono en donde
 la aceptación o el rechazo de una proposición dependen de un análisis entre
 argumentos a favor y en contra de esa proposición. Usualmente es utilizada bajo
 diferentes formalizaciones para capturar aspectos del razonamiento del sentido
 común y la representación de información incompleta y potencialmente
-inconsistente.\\
+inconsistente.
+
 En particular, la toma de decisiones de los agentes inteligentes realizada por nuestro equipo en el marco de la competencia MAPC 2011, fue realizada utilizando Argumentación rebatible via DeLP. (cita!)
 
-\section*{DeLP}
+\section{DeLP}
 DeLP (Defeasible-Logic Programming) es...
 %aca mentir MUCHO.
 
@@ -70,19 +76,22 @@ para Sistemas Multi-Agente.
 El escenario del año 2011 está formado por el mapa de un planeta representado
 mediante un grafo. Cada nodo del grafo es una locación válida (y tiene un valor
 determinado), y existen arcos (con diferente costo de energía) que permiten a un
-agente desplazarse de una locación a otra.\\
+agente desplazarse de una locación a otra.
+
 En cada ronda de la competición participan dos equipos rivales. Cada equipo
 posee un conjunto de agentes con diferentes roles preestablecidos
 (\textit{Explorador}, \textit{Saboteador}, \textit{Reparador},
 \textit{Sentinela} e \textit{Inspector}). El rol de cada agente define tanto el
 conjunto de acciones que puede realizar, como sus características físicas
 (\textit{Energía}, \textit{Salud}, \textit{Fuerza} y \textit{Rango de
-Visión}).\\
+Visión}).
+
 \subsubsection{Puntaje}
 La simulación del juego se desarrolla por pasos, y en cada paso se otorga a los
 equipos una determinada cantidad de puntos según el estado de la simulación. El
 objetivo del juego es obtener la mayor cantidad de puntos posibles cuando la
-simulación termina.\\
+simulación termina.
+
 Para obtener puntos, los agentes de cada uno de los equipos deben lograr formar
 \textit{"`zonas"'} en el mapa logrando posicionarse en diferentes locaciones de
 manera estratégica. La predominancia de un equipo sobre el otro en los nodos es
@@ -139,7 +148,8 @@ A diferencia de los años anteriores, esta competencia apunta a lograr un buen
 Sistema Multi-Agente puramente distribuido; esto significa que cada agente debe
 realizar el proceso de toma de decisiones por su cuenta, en lugar de
 contar con una inteligencia centralizada que decida cuál será la acción a
-realizar para cada uno de los agentes.\\
+realizar para cada uno de los agentes.
+
 Dado que cada agente decide por separado qué acción tomar, muchas veces ocurre que dos (o más) de los agentes del mismo
 equipo realizan acciones que resultan redundantes, peligrosas, y en el peor de
 los casos, perjudiciales al combinarse. Si bien por limitaciones temporales únicamente se realizaron coordinaciones implícitas en las acciones de los agentes, es naturalmente posible mejorar dicha coordinación para sacar mayor rédito de las acciones, y ésta es la principal motivación de este trabajo.

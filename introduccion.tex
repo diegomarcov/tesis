@@ -2,46 +2,17 @@
 
 \section{Enunciado}
 
-El objetivo de este trabajo es presentar en detalle el sistema de resolución de
-conflictos utilizado en el marco de MAPC 2011\footnote{Multi-Agent Programming
+El objetivo de este trabajo es presentar en detalle un esquema de resolución de
+conflictos a utilizar en el sistema desarrollado en el marco de MAPC 2011\footnote{Multi-Agent Programming
 Contest 2011 - http://www.multiagentcontest.org/}, la representación de la base
 de conocimiento utilizada para ello, las decisiones de diseño e implementación
 tomadas, sus fortalezas, debilidades, y posibilidades de trabajo a futuro para
-mejorarlo.
-
-% mentira sobre multi-agentes y coordinacion, por que resulta copado, etc
+mejorarlo. % mentira sobre multi-agentes y coordinacion, por que resulta copado, etc
 
 El sistema de resolución de conflictos funciona de manera local a cada agente,
 y tiene como objetivo reconsiderar la acción a realizar por dicho agente, una
 vez terminado el proceso de decisión, analizando las potenciales acciones del
 resto de los compañeros de equipo.
 
-El trabajo estará dividido en diferentes capítulos para una mejor organización. Comenzaremos dando un conjunto de definiciones de alto nivel y un marco teórico (incluyendo un background formal y el contexto de desarrollo) sobre el que trabajaremos durante el resto de la tesis. A continuación, presentaremos en detalle la arquitectura de los agentes utilizados en la competencia (incluyendo la entrada y salida de datos, las diferentes secciones de procesamiento, y la comunicacion con otros agentes). Luego describiremos delladamente el mecanismo de resolución de conflictos, presentando la posibilidad y el marco teorico para su completa realizacion, sus ventajas respecto al resto de los mecanismos de coordinación de la competencia, y algunas posibilidades de trabajo a futuro. Por último, mostraremos algunas conclusiones globales y alternativas de trabajo para la coordinación en el sistema.
+El trabajo estará dividido en diferentes capítulos para una mejor organización. Comenzaremos dando un conjunto de definiciones de alto nivel y un marco teórico (incluyendo un background formal y el contexto de desarrollo) sobre el que trabajaremos durante el resto de la tesis. A continuación, presentaremos en detalle la arquitectura de los agentes utilizados en la competencia (incluyendo la entrada y salida de datos, las diferentes secciones de procesamiento, y la comunicacion con otros agentes), e introduciremos las modificaciones necesarias para agregar la resolución de conflictos. Luego describiremos detalladamente dicho sistema, presentando la posibilidad y el marco teorico para su completa realizaciçon, sus ventajas respecto al resto de los mecanismos de coordinación de la competencia, y algunas posibilidades de trabajo a futuro. Por último, discutiremos algunas conclusiones globales y alternativas de trabajo para la coordinación en el sistema.
 
-
-%
-%
-%\section{Estructura del trabajo}
-%
-%	\begin{itemize}
-%	\item \textbf{Capítulo 1}: Introducción
-%	
-%	Contiene la información básica y a alto nivel del contenido del trabajo.
-%	
-%	\item \textbf{Capítulo 2}: Definiciones
-%	
-%	Contiene las definiciones de los conceptos utilizados a lo largo del trabajo.
-%	
-%	\item \textbf{Capítulo 3}: Something something
-%	
-%	Contiene texto (!).
-%	
-%	\item \textbf{Capítulo 4}: Something MORE
-%	
-%	Contiene aún más texto.
-%	
-%	\item \textbf{Capítulo 5}: Conclusiones
-%	
-%	A partir del análisis en los capítulos anteriores, delimitamos los resultados del trabajo.
-%	
-%	\end{itemize}
