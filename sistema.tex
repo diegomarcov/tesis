@@ -25,14 +25,14 @@ que, en este esquema de coordinación, cuando un agente decide que realizar la
 acción que había elegido deja de ser conveniente, pasa a actuar de manera
 \textit{segura}, en el sentido de que realiza acciones que garantizan (o al
 menos, maximizan las chances de) que no haya conflictos con otros agentes o
-riesgo de p\'erdida de puntos. Se detallarán las potenciales acciones a realizar en \textit{modo seguro} en la sección siguiente, y más adelante analizaremos alternativas de acción que puedan dar aún más rédito.
+riesgo de pérdida de puntos. Se detallarán las potenciales acciones a realizar en \textit{modo seguro} en la sección siguiente, y más adelante analizaremos alternativas de acción que puedan dar aún más rédito.
 
-\subsection{Clasificaci\'on de conflictos}
+\subsection{Clasificación de conflictos}
 Existen diferentes tipos de conflicto que los agentes pueden encontrar al
-momento de reconsiderar su decisi\'on respecto a la manera de actuar.
+momento de reconsiderar su decisión respecto a la manera de actuar.
 
-Resulta natural pensar, por ejemplo, que si dos o más agentes van a realizar una
-misma acción con una intención idéntica (y que dicha acción/intención deba ser
+Resulta natural pensar, por ejemplo, que si dos o más agentes van a realizar una acción persiguiendo
+una intención idéntica (y que dicha acción/intención deba ser
 realizada una única vez), entonces es un malgasto de recursos (energía) que
 todos ellos la realicen. Un ejemplo de este caso ocurre cuando dos agentes
 cualesquiera tienen como intención survey($X_{i}$), cuando dos exploradores
@@ -44,31 +44,38 @@ definido de muchas maneras; el propuesto para la competencia fue dejar que el
 agente que pudiera efectivizar la intención en menor cantidad de turnos
 realizara la acción, y en caso de empate, dejar que el que tuviera más energía
 fuera el ganador. Si ambas condiciones resultaran en empate, el ganador se
-determina por orden lexicográfico. Por lo tanto, en caso de que un agente
-detectara que otro tiene la misma intención, y que dicho agente se encuentra en
-una postura más favorable, y que no tiene sentido que la intención sea efectivizada por más de un agente, entonces pasa a actuar en \textit{modo seguro}.
+determina por orden lexicográfico, pasando todos los perdedores a actuar en \textit{modo seguro}.
+
 Sin embargo, no todos los casos en los que dos o más agentes tengan exactamente
 la misma intención resultan conflictivos: por ejemplo, dos saboteadores pueden
 querer atacar de manera simultánea a un mismo enemigo. Esta situación da lugar a
 la clasificación de todas las intenciones en dos tipos: \textit{cooperativas} y
 \textit{excluyentes}.
 
-Por otro lado, existen conflictos m\'as complejos para su detecci\'on y
-resoluci\'on, como por ejemplo, que un agente dos agentes decidan moverse para
-expandir una zona dominada, y que el movimiento sincronizada resulte en la
-p\'erdida de la zona.
+Por último, existen conflictos más complejos para su detección y
+resolución; por ejemplo, que dos agentes decidan moverse para
+expandir una zona ya dominada, y que el movimiento sincronizado resulte en la
+pérdida de la zona.
 
-A continuaci\'on, analizaremos c\'omo se detectan y resuelven todos estos
+A continuación, analizaremos cómo se detectan y resuelven todos estos
 conflictos.
 
-\subsubsection{Deteccio\'on de conflictos}
+\subsection{Detección de conflictos}
 
-Una vez finalizada la segunda fase de comunicaci\'on, cada agente considera las
-intenciones y acciones a realizar de los dem\'as miembros del equipo en busca de
+Una vez finalizada la segunda fase de comunicación, cada agente considera las
+intenciones y acciones a realizar de los demás miembros del equipo en busca de
 potenciales conflictos.
 
-El primer y m\'as sencillo paso es verificar si otro agente tiene una
-intenci\'on excluyente que coincida con la propia. Si ese es el caso, se
-eval\'ua cu\'al de los dos agentes se encuentra en mejor estado para efectivizar
-al intenci\'on (de acuerdo a, como se mencion\'o antes, la cantidad de turnos
-que 
+El primer paso consiste en ordenar las acciones inminentes a realizar de cada uno de los agentes de acuerdo al orden de prioridad establecido para la fase del juego actual.%bla bla bla bla bla
+
+El paso siguiente es verificar si otros agentes tienen una
+intención \textit{excluyente} que coincida con la propia. Si ese es el caso, se
+evalúa cuál de dichos agentes se encuentra en mejor estado para efectivizar
+la intención (de acuerdo a, como se mencionó antes, la cantidad de turnos
+que necesitará para efectivizarla, seguido en caso de empate por la energía de cada uno de ellos, y por último según el orden lexicográfico de sus nombres).
+Por razones de optimización, en las versiones beta ya implementadas del sistema los agentes proveen en la última fase de comunicación la cantidad de turnos que suponen necesitar para efectivizar la intención (considerando siempre el mejor caso; es decir, que no ocurran condiciones de corte, ataques enemigos, o cambios de plan repentinos).% mencionar que en versiones futuras se puede incluir TODO EL PLAN de los agentes (es decir, todos los pasos que van a seguir), para posiblemente argumentar sobre la mejor decisión con eso (?)
+
+A continuación, en caso de que la etapa anterior no haya detectado ningún conflicto, se pasa a la fase más compleja de la detección; dado que cada agente que provoque cambios en su posición en el mapa puede afectar el control de las zonas dominadas, el sistema realiza una simulación progresiva de los puntos que el equipo puede obtener de acuerdo a las nuevas hipotéticas posiciones de cada agente. Esta simulación es llamada \textit{progresiva} porque se realiza corriendo una instancia del algoritmo de coloreo por cada nueva posición hipotética de los agentes, ordenadas según el orden de prioridad establecido. El sistema comienza calculando el puntaje según las posiciones originales de todos los agentes excepto el que tiene la mayor prioridad para moverse; a partir de este puntaje base, se vuelve a correr el algoritmo de coloreo con la nueva posición hipotética del segundo agente mejor priorizado; este puntaje se compara con el puntaje base del primer cálculo,% mayor o igual? definir threshold?
+y si es mayor o igual, pasa a ser el nuevo puntaje de referencia. Los cálculos continúan repitiéndose posicionando a cada agente en su nueva posición hipotética (si efectivamente mejora o mantiene igual los puntos obtenidos en cada turno), o dejándolos en su posición original y continuándo el análisis para el resto (en caso de que se haya detectado que su movimiento decrementa los puntos obtenidos, y se considere que el agente pasa a actuar en \textit{modo seguro}), hasta haber analizado las acciones de todos los agentes.
+
+\subsection{Resolución de conflictos}
