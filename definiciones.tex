@@ -32,35 +32,10 @@ Un aspecto importante en SMA es la comunicación entre agentes, la cual puede
 ser necesaria para que los agentes compitan o cooperen de acuerdo a sus metas
 individuales. Los diálogos con otros agentes del mismo ambiente son, actualmente, un área de estudio intensivo.
 
-\section{Inteligencia Artificial Distribuida}
-Es el estudio, construcción y aplicación de Sistemas Multi-Agente.
 
-\section{Arquitectura BDI}
-El modelo BDI (\textit{Belief-Desire-Intentions}) es tanto una teoría como una arquitectura de agentes. Un agente BDI posee un conjunto de \textbf{creencias}, un conjunto de \textbf{deseos}, y otro de \textbf{intenciones}. Las intenciones representan un conjunto de alternativas que el agente posee para alcanzar sus metas, y tienen la propiedad de ser \textbf{persistentes}; el agente mantiene todas sus intenciones hasta que logre cumplirlas, o bien se de cuenta de que \textit{no} podrá cumplirlas, o bien, por algún otro motivo, las razones que tuvo para adoptar por primera vez a la intención dejaron de ser válidas.
+\input{preliminares_bdi.tex}
 
-A grandes rasgos, la arquitectura BDI propone que el agente:
-\begin{enumerate}
-	\item Perciba los cambios del entorno en el que se desenvuelve.
-	\item Revise sus creencias del mundo en base a la percepción.
-	\item Razone acerca de sus intenciones para reconsiderarlas, de ser necesario.
-	\item Seleccione una acción a seguir, razonando sobre sus creencias e intenciones.
-	\item Ejecute la acción seleccionada, y vuelva al primer paso.
-\end{enumerate}
-En particular, los agentes implementados por nuestro equipo en el marco de la competencia MAPC 2011 estuvieron basados en una arquitectura BDI que será presentada en profundidad en el capítulo siguiente.
-
-\section{Argumentación rebatible}
-La argumentación rebatible es un mecanismo de razonamiento no monótono en donde
-la aceptación o el rechazo de una proposición dependen de un análisis entre
-argumentos a favor y en contra de esa proposición. Usualmente es utilizada bajo
-diferentes formalizaciones para capturar aspectos del razonamiento del sentido
-común y la representación de información incompleta y potencialmente
-inconsistente.
-
-En particular, la toma de decisiones de los agentes inteligentes realizada por nuestro equipo en el marco de la competencia MAPC 2011, fue realizada utilizando Argumentación rebatible via DeLP. (cita!)
-
-\section{DeLP}
-DeLP (Defeasible-Logic Programming) es...
-%aca mentir MUCHO.
+\input{preliminares_delp.tex}
 
 \section{Multi-Agent Programming Contest}
 El \textit{Multi-Agent Programming Contest} es un concurso de programación de

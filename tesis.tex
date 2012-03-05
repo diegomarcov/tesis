@@ -1,33 +1,152 @@
-\documentclass[a4paper,12pt]{book}
+\documentclass[oneside]{book}
+
 \usepackage[spanish]{babel}
 \usepackage[latin1]{inputenc}
-% \usepackage{fullpage}
-\usepackage{listings}
-% \usepackage{gmverb}
-% \usepackage[colorlinks=true,urlcolor=black,linkcolor=black]{hyperref}
-\usepackage{graphicx}
+\usepackage{amsthm}
+\usepackage[pdftex]{graphicx}
 \usepackage{epstopdf}
-\usepackage[absolute]{textpos}
+\usepackage{enumerate}
+\usepackage{tikz}
 
-\usepackage{setspace}
-\onehalfspacing
-
-\lstset{language=C,
-frame=single,
-basicstyle=\footnotesize,
-tabsize=2,
-showtabs=false,
-showspaces=false,
-showstringspaces=false}
-\lstset{breaklines}
-
-\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
-
-\title{Aplicación de Argumentación y diálogos\\en Sistemas Multi-Agente orientados a juegos}
+\title{Argumentaciion en sistemas multi-agente}
 
 \author{Diego Marcovecchio (LU: 83815)\\Director: Dr. Alejandro J. García}
 
-\date{20 de Agosto de 2011}
+%\date{20 de Agosto de 2011}
+
+\theoremstyle{definition}
+\newtheorem{definicion}{Definición}[section]
+\theoremstyle{example}
+\newtheorem{ejemplo}{Ejemplo}[section]
+
+\newcommand{\ie}{i.\,e.}
+\newcommand{\etal}{\mbox{{\em et al.}}}
+\newcommand{\eg}{e.\,g.}
+\newcommand{\raya}{\rule{\textwidth}{.05mm}}
+\newcommand{\eoe}{\begin{flushright}$\Box$\end{flushright}}
+\newcommand{\marginnote}[1]{\marginpar{\frame{#1}}}
+\newcommand{\new}{\marginpar{\frame{\sc new}}}
+
+
+\newcommand{\DLP}{\mbox{DeLP}}
+\newcommand{\DLPa}{\mbox{DeLP}}
+\newcommand{\DLPas}{\mbox{DeLP(a)-strict}}
+\newcommand{\DLPans}{\mbox{DeLP(a)-non-strict}}
+\newcommand{\dlp}{\mbox{\it de.l.p.}}
+
+\newcommand{\cree}{B}
+
+\newcommand{\no}{\mbox{$\sim$}}
+\newcommand{\negda}[1]{\mbox{\textsf{not}$#1$}}
+\newcommand{\naf}{\p{$\backslash$+}}
+\newcommand{\notj}{{not}}
+\newcommand{\comp}[1]{\mbox{$\overline{#1}$}}
+\newcommand{\simbcomp}{ $\stackrel{\comp{\ \ }}{\vrule width 0pt height.8ex}$ }
+
+\newcommand{\p}[1]{{\small \tt #1}}
+
+% DLP programs 
+% strict rule
+\newcommand{\srule}[2]{\mbox{$ #1\;\leftarrow\;#2$}}
+%\newcommand{\fact}[1]{\mbox{$ #1$}}  % some cls files have \fact defined for other things 
+\newcommand{\facto}[1]{\mbox{$ #1$}} % for compatibility when the reason above holds
+% literal
+\newcommand{\lit}[1]{\mbox{$ #1$}}
+% defesible rule
+\newcommand{\drule}[2]{\mbox{$ #1\; \defleftarrow \; #2$}}
+\newcommand{\defleftarrow}{{\raise1.5pt\hbox{\tiny\defleft}}}
+\newcommand{\defleft}{\mbox{---\hspace{-1.5pt}\raise.05pt\hbox{$<$}}}
+% presumption
+%\newcommand{\presum}[1]{\drule{#1}{true}}
+\newcommand{\presum}[1]{\drule{#1}{}}
+% inverted rules
+\newcommand{\invleftarrow}{ $\hookleftarrow $ }
+\newcommand{\irule}[2]{\mbox{$#1$ \invleftarrow $#2$}}
+\newcommand{\dquery}[1]{\drule{}{#1}}
+
+% Donald Nute rules
+\newcommand{\rr}[2]{\mbox{$ #1 \Rightarrow #2 $}} % defeasible
+\newcommand{\re}[2]{\mbox{$#1 \rightarrow #2 $}} % strict
+\newcommand{\de}[2]{\mbox{$ #1 \leadsto #2$}} %defeater
+
+% Programciï¿½n en Logica Extendida
+\newcommand{\ple}{\mbox{\sc PLE}}
+\newcommand{\extclause}[2]{\mbox{ #1 $\leftarrow$ #2}}
+\newcommand{\true}{$true$}
+
+% flecha rebatible para la derecha
+\newcommand{\defrightarrow}{\mbox{$\succ\!$---}}
+\newcommand{\defarrow}{{\raise1.5pt\hbox{\tiny\defrightarrow}}}
+
+
+% Argumentos
+\newcommand{\ArgA}{\mbox{${\mathcal A}$}}
+\newcommand{\Ap}{\mbox{\ArgA$'$}}
+\newcommand{\ArgAo}{\mbox{${\mathcal A_0}$}}
+\newcommand{\ArgAa}{\mbox{${\mathcal A_1}$}}
+\newcommand{\ArgAb}{\mbox{${\mathcal A_2}$}}
+\newcommand{\ArgAn}{\mbox{${\mathcal A_n}$}}
+\newcommand{\ArgAi}{\mbox{${\mathcal A_i}$}}
+\newcommand{\ArgAim}{\mbox{${\mathcal A_{i-1}}$}}
+\newcommand{\ArgB}{\mbox{${\mathcal B}$}}
+\newcommand{\ArgBo}{\mbox{${\mathcal B_0}$}}
+\newcommand{\ArgBa}{\mbox{${\mathcal B_1}$}}
+\newcommand{\ArgBb}{\mbox{${\mathcal B_2}$}}
+\newcommand{\ArgBk}{\mbox{${\mathcal B_k}$}}
+\newcommand{\ArgQ}{\mbox{${\mathcal Q}$}}
+\newcommand{\ArgQo}{\mbox{${\mathcal Q_0}$}}
+\newcommand{\ArgQa}{\mbox{${\mathcal Q_1}$}}
+\newcommand{\ArgQb}{\mbox{${\mathcal Q_2}$}}
+\newcommand{\ArgQk}{\mbox{${\mathcal Q_k}$}}
+\newcommand{\ArgQn}{\mbox{${\mathcal Q_n}$}}
+\newcommand{\ArgQi}{\mbox{${\mathcal Q_i}$}}
+\newcommand{\ArgQim}{\mbox{${\mathcal Q_{i-1}}$}}
+\newcommand{\AQ}{\mbox{$\langle \ArgA,\ArgQ \rangle $}}
+\newcommand{\AoQo}{\mbox{$\langle \ArgAo,\ArgQo \rangle $}}
+\newcommand{\AaQa}{\mbox{$\langle \ArgAa,\ArgQa \rangle $}}
+\newcommand{\AbQb}{\mbox{$\langle \ArgAb,\ArgQb \rangle $}}
+\newcommand{\AnQn}{\mbox{$\langle \ArgAn,\ArgQn \rangle $}}
+\newcommand{\AiQi}{\mbox{$\langle \ArgAi,\ArgQi \rangle $}}
+\newcommand{\AimQim}{\mbox{$\langle \ArgAim,\ArgQim \rangle $}}
+\newcommand{\BaQa}{\mbox{$\langle \ArgBa,\ArgQa \rangle $}}
+\newcommand{\BkQk}{\mbox{$\langle \ArgBk,\ArgQk \rangle $}}
+
+\newcommand{\Argum}[2]{\mbox{$\langle #1, #2 \rangle $}}
+\newcommand{\AS}[2]{$\langle \{#1\}, #2 \rangle $}
+\newcommand{\bigAS}[2]{$\bigl\langle \{#1\}, #2 \bigr\rangle $}
+
+\newcommand{\nlA}[1]{$$\mbox{#1}$$}
+
+% Sets of rules
+\newcommand{\Facts}{\mbox{$\Theta$}}       % Facts
+\newcommand{\SRules}{\mbox{$\Omega$}}       % Stricts rules
+\newcommand{\SSet}{\mbox{$\Pi$}}       % Stricts rules & facts
+\newcommand{\SSg}{\mbox{${\SSet}_G$}}  % Stricts rules without facts 
+\newcommand{\SSp}{\mbox{${\SSet}_P$}}  % set of facts
+\newcommand{\DD}{\mbox{$\Delta$}}      % Defeasible rules
+\newcommand{\SD}{\mbox{$(\SSet,\DD)$}} % sets of rules of a program 
+\newcommand{\FSD}{\mbox{$(\Facts,\SRules,\DD)$}} % sets of rules of a program 
+\newcommand{\Presumptions}{\mbox{$\Phi$}}   % 
+\newcommand{\DDp}{\mbox{$\Delta^{+}$}}  % Defeasible rules and presumptions
+\newcommand{\SDp}{\mbox{$(\SSet,\DDp)$}} % sets of rules of a program 
+\newcommand{\FSDP}{\mbox{$(\Facts,\SRules,\DD,\Presumptions)$}} % sets of rules of a program 
+
+\newcommand{\FySyD}{\mbox{\Facts\ $\cup$ \SSet\ $\cup$ \DD}}   
+\newcommand{\SyD}{\mbox{\SSet\ $\cup$ \DD}}   
+\newcommand{\SyA}{\mbox{\SSet\ $\cup$ \ArgA}}
+\newcommand{\SyAp}{\mbox{\SSet\ $\cup$ \Ap}}
+\newcommand{\SyArga}{\mbox{\SSet\ $\cup$ \Arga}}
+\newcommand{\RR}{\mbox{$\mathcal R$}}
+\newcommand{\PP}{\mbox{${\mathcal P}$}}
+\newcommand{\PPa}{\mbox{${\mathcal P}_1$}}
+\newcommand{\PPb}{\mbox{${\mathcal P}_2$}}
+\newcommand{\PPc}{\mbox{${\mathcal P}_3$}}
+\newcommand{\PPd}{\mbox{${\mathcal P}_4$}}
+\newcommand{\FFi}{\mbox{${\mathcal F}_i$}}
+\newcommand{\FF}{\mbox{${\mathcal F}$}}
+
+\newcommand{\SyQaQ}{\mbox{$\SSet \cup \{\ArgQa\\,\ArgQ\}$}}
+
 
 \begin{document}
 %\lstset{frame=single}
