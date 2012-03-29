@@ -9,7 +9,9 @@ de conocimiento utilizada para ello, las decisiones de diseño e implementación
 tomadas, sus fortalezas, debilidades, y posibilidades de trabajo a futuro para
 mejorarlo. % mentira sobre multi-agentes y coordinacion, por que resulta copado, etc
 
-El sistema de resolución de conflictos funciona de manera local a cada agente,
+A modo de ejemplo introductorio, consideremos el escenario de la competencia MAPC 2011 (cuya descripción puede ser encontrada en el capítulo siguiente), y asumamos una zona controlada por agentes de un equipo; si dos de los agentes colocados en nodos consecutivos del mapa decidieran "`expandir"' dicha zona, y cada uno de ellos se moviera hacia un lado opuesto a la vez, la "`zona"' formada por ellos quedaría destruida puesto que habría más de un nodo de distancia separándolos. Éste y otros tipos de problemas de coordinación son los que motivan el desarrollo de un \textit{sistema de resolución de conflictos}.
+
+El \textit{sistema de resolución de conflictos} funciona de manera local a cada agente,
 y tiene como objetivo reconsiderar la acción a realizar por dicho agente, una
 vez terminado el proceso de decisión, analizando las potenciales acciones del
 resto de los compañeros de equipo.
