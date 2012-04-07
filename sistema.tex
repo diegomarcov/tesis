@@ -1,5 +1,5 @@
 \chapter{Sistema de resolución de conflictos}
-En este capítulo se propondrá el marco teórico y el esquema aplicativo del sistema de resolución de conflictos a utilizar en el marco de MAPC. Es importante destacar que, si bien por limitaciones temporales nuestro equipo únicamente implementó coordinaciones implícitas entre las acciones de los agentes durante la competencia del año 2011, la idea de implementación de un sistema de coordinación más complejo y robusto fue parte de los planes desde el comienzo del trabajo.
+En este capítulo se propondrá el marco teórico y el esquema aplicativo del sistema de resolución de conflictos a utilizar en el marco de MAPC.
 
 \section{Información necesaria}
 Después de estudiar el flujo de información y el contenido de la base de conocimiento de cada uno de nuestros agentes, sabemos que en cada turno un agente conoce su conjunto completo de creencias, deseos, y tiene al menos una intención persistente y bien determinada, al igual que \textit{al menos} una acción a realizar a futuro. Recordemos, además, que gracias al Servidor de Percepciones cada agente tiene una visión unificada del mundo y conoce los roles, posiciones y características físicas de sus compañeros de equipo.
@@ -10,16 +10,17 @@ Consideremos el agregado a la arquitectura mostrado; luego de esta nueva fase de
 
 Mostraremos ahora la primer posibilidad de coordinación propuesta; este sistema fue propuesto para ser utilizado durante la competencia MAPC 2011, y si bien no pudo ser presentado por falta de tiempo, existen algunas versiones en estado \textit{beta} ya implementadas.
 
+\subsection{Prioridad de las intenciones}
 Dado que el sistema provee suficiente flexibilidad como para permitir definir
 distintas estrategias de resolución de acuerdo a la táctica utilizada en la fase
-actual del juego, el primer paso es escribir diferentes órdenes de prioridad acordes a dichas fases. Es decir, el sistema de resolución propuesto permite
-modificar el comportamiento de los agentes de manera dinámica según el estado
-del juego, en lugar de resolver los potenciales conflictos siempre del mismo
-modo. Los órdenes de prioridad escritos indicarán la importancia de las posibles intenciones de los agentes en una fase determinada del juego.
+actual del juego, el primer paso es escribir un conjunto de órdenes de prioridad para las intenciones acorde a dichas fases.
+Por ejemplo, si los agentes consideraran tres fases diferentes del juego (exploración, conquista de zonas y defensa del terreno), se debe contar con tres órdenes de prioridad, uno para cada respectiva fase. Esto resulta en que el sistema de resolución propuesto permita modificar el comportamiento de los agentes de manera dinámica según el estado
+de la simulación, en lugar de resolver los potenciales conflictos siempre del mismo modo. Los órdenes de prioridad escritos indicarán la importancia de las posibles intenciones de los agentes en una fase determinada del juego.
+A modo de ejemplo, durante los primeros veinte turnos de la simulación, el orden de prioridad puede ser definido de manera tal que se priorice la exploración del mapa a la expansión de zonas; de esta manera, los agentes pueden obtener mayor información del escenario para elaborar mejores planes a la hora de conquistar zonas del mapa.
 
-Una vez que contamos con los órdenes de prioridad, el agente utiliza todo el
+Una vez que contamos con los órdenes de prioridad, el agente utilizará todo el
 conocimiento de las características físicas y las intenciones y acciones
-inminentes de sus compañeros, y re-evalúa la propia. Es importante mencionar
+inminentes de sus compañeros para re-evaluar la propia. Es importante mencionar
 que, en este esquema de coordinación, cuando un agente decide que realizar la
 acción que había elegido deja de ser conveniente, pasa a actuar de manera
 \textit{segura}, en el sentido de que realiza acciones que garantizan (o al
@@ -34,9 +35,9 @@ Resulta natural pensar, por ejemplo, que si dos o más agentes van a realizar una
 una intención idéntica (y que dicha acción/intención deba ser
 realizada una única vez), entonces es un malgasto de recursos (energía) que
 todos ellos la realicen. Un ejemplo de este caso ocurre cuando dos agentes
-cualesquiera tienen como intención survey($X_{i}$), cuando dos exploradores
-tienen como intención probear($X_{i}$), o cuando dos inspectores tienen como
-intención inspect($X_{i}$), para el mismo \textit{i}. En cualquiera de estos
+cualesquiera tienen como intención survey($X_{i}$) o cuando dos exploradores
+tienen como intención probear($X_{i}$) para el mismo \textit{i}, o cuando dos inspectores tienen como
+intención inspect estando en el mismo nodo. En cualquiera de estos
 casos, resulta evidente que sólo uno de los agentes debería llevar a cabo la
 acción. El criterio específico para decidir cuál de ellos la realiza puede ser
 definido de muchas maneras; el propuesto para la competencia fue dejar que el
@@ -52,12 +53,10 @@ la clasificación de todas las intenciones en dos tipos: \textit{cooperativas} y
 \textit{excluyentes}.
 
 Por último, existen conflictos más complejos para su detección y
-resolución; por ejemplo, que dos agentes decidan moverse para
-expandir una zona ya dominada, y que el movimiento sincronizado resulte en la
-pérdida de la zona.
+resolución; por ejemplo, supongamos una zona dominada por el equipo, con dos agentes delimitando una de las fronteras en dos nodos consecutivos; si ambos agentes decidieran intentar expandir la zona para aumentar el puntaje ganado en cada turno al mismo tiempo, y se movieran en direcciones opuestas separándose de manera que queden \textit{dos} nodos vacíos en medio de ellos, el control de la zona se perdería, resultando en una gran pérdida de puntos.
+%que dos agentes decidan moverse para expandir una zona ya dominada, y que el movimiento sincronizado resulte en la pérdida de la zona.
 
-A continuación, analizaremos cómo se detectan y resuelven todos estos
-conflictos.
+A continuación, propondremos cómo detectar y resolver todos estos conflictos.
 
 \subsection{Detección de conflictos}
 

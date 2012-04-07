@@ -24,7 +24,7 @@ En la mayoría de los casos, los agentes no existen por sí solos, sino que partic
 
 \section{Sistema Multi-Agente}
 Es un sistema en el cual muchos agentes interactúan para conseguir algún objetivo o realizar alguna tarea común. En los
-sistemas multiagente, cada agente tiene información incompleta y capacidades limitadas, el control del sistema es distribuido,
+sistemas multi-agente, cada agente tiene información incompleta y capacidades limitadas, el control del sistema es distribuido,
 los datos están descentralizados, y la computación es asincrónica. Los agentes se desenvuelven en un entorno dinámico y
 cambiante, el cual no puede predecirse y se ve afectado por las acciones que son llevadas a cabo.
 
@@ -119,12 +119,7 @@ reparador aumenta el valor de la Salud actual de su compañero de equipo X
 \end{itemize}
 
 \subsubsection{Toma de decisiones y motivación para la resolución de conflictos}
-A diferencia de los años anteriores, esta competencia apunta a lograr un buen
-Sistema Multi-Agente puramente distribuido; esto significa que cada agente debe
-realizar el proceso de toma de decisiones por su cuenta, en lugar de
-contar con una inteligencia centralizada que decida cuál será la acción a
-realizar para cada uno de los agentes.
-
 Dado que cada agente decide por separado qué acción tomar, muchas veces ocurre que dos (o más) de los agentes del mismo
 equipo realizan acciones que resultan redundantes, peligrosas, y en el peor de
-los casos, perjudiciales al combinarse. Si bien por limitaciones temporales únicamente se realizaron coordinaciones implícitas en las acciones de los agentes, es naturalmente posible mejorar dicha coordinación para sacar mayor rédito de las acciones, y ésta es la principal motivación de este trabajo.
+los casos, perjudiciales al combinarse. Como mencionamos en el ejemplo introductorio de la tesis, en el caso de que dos agentes realicen una acción idéntica a la vez, existe la posibilidad de que dicha planificación represente un malgasto de tiempo o recursos para los agentes; en el marco de MAPC 2011, esto ocurre, por ejemplo, cuando dos agentes cualesquiera tienen como intención survey($X_{i}$), cuando dos exploradores tienen como intención probear($X_{i}$), o cuando dos inspectores tienen como intención inspect estando en el mismo nodo.
+Si bien por limitaciones temporales durante la competencia únicamente se realizaron coordinaciones implícitas en las acciones de los agentes, es naturalmente posible mejorar dicha coordinación para sacar mayor rédito de las acciones, y ésta es la principal motivación de este trabajo.

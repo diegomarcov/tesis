@@ -9,12 +9,21 @@ de conocimiento utilizada para ello, las decisiones de diseño e implementación
 tomadas, sus fortalezas, debilidades, y posibilidades de trabajo a futuro para
 mejorarlo. % mentira sobre multi-agentes y coordinacion, por que resulta copado, etc
 
-A modo de ejemplo introductorio, consideremos el escenario de la competencia MAPC 2011 (cuya descripción puede ser encontrada en el capítulo siguiente), y asumamos una zona controlada por agentes de un equipo; si dos de los agentes colocados en nodos consecutivos del mapa decidieran "`expandir"' dicha zona, y cada uno de ellos se moviera hacia un lado opuesto a la vez, la "`zona"' formada por ellos quedaría destruida puesto que habría más de un nodo de distancia separándolos. Éste y otros tipos de problemas de coordinación son los que motivan el desarrollo de un \textit{sistema de resolución de conflictos}.
+A diferencia de los años anteriores, esta competencia apunta a lograr un buen
+Sistema Multi-Agente puramente distribuido; esto significa que cada agente debe
+realizar el proceso de toma de decisiones por su cuenta, en lugar de
+contar con una inteligencia centralizada que decida cuál será la acción a
+realizar para cada uno de los agentes. Este esquema implica que la coordinación a
+la hora de la toma de decisiones entre los agentes sea notablemente más compleja que
+cuando las decisiones se toman de manera centralizada.
+
+A modo de ejemplo introductorio, consideremos un escenario multi-agente cualquiera en el que agentes inteligentes realizan diferentes acciones de manera cooperativa; en el caso de que dos de los agentes realicen una acción idéntica a la vez, existe la posibilidad de que dicha planificación represente un malgasto de tiempo o recursos para los agentes; este problema elemental de coordinación y otros de mucha mayor complejidad pueden ser encontrados en diversos escenarios multi-agente (especialmente cuando la toma de decisiones de cada agente es realizado de manera distribuida), y sus consecuencias en particular en el escenario de la MAPC 2011 motivan el desarrollo de nuestro \textit{sistema de resolución de conflictos}.
 
 El \textit{sistema de resolución de conflictos} funciona de manera local a cada agente,
 y tiene como objetivo reconsiderar la acción a realizar por dicho agente, una
 vez terminado el proceso de decisión, analizando las acciones a realizar por el 
 resto de los compañeros de equipo.
 
-El trabajo estará dividido en diferentes capítulos para una mejor organización. Comenzaremos dando un conjunto de definiciones de alto nivel y un marco teórico (incluyendo un background formal y el contexto de desarrollo) sobre el que trabajaremos durante el resto de la tesis. A continuación, presentaremos en detalle la arquitectura de los agentes utilizados en la competencia (incluyendo la entrada y salida de datos, las diferentes secciones de procesamiento, y la comunicacion con otros agentes), e introduciremos las modificaciones necesarias para agregar la resolución de conflictos. Luego describiremos detalladamente dicho sistema, presentando la factibilidad y el marco teórico para su completa realización, algunas consideraciones de la implementación en estado beta actual, sus ventajas respecto al resto de los mecanismos de coordinación de la competencia, y algunas posibilidades de trabajo a futuro. Por último, discutiremos algunas conclusiones globales y alternativas de trabajo para la coordinación en el sistema.
+\section{Organización del trabajo}
+El trabajo estará dividido en diferentes capítulos para una mejor organización. Comenzaremos dando un conjunto de definiciones de alto nivel y un marco teórico (incluyendo un background formal y el contexto de desarrollo) sobre el que trabajaremos durante el resto de la tesis. A continuación, presentaremos en detalle la arquitectura de los agentes utilizados en la competencia (incluyendo la entrada y salida de datos, las diferentes secciones de procesamiento, y la comunicación con otros agentes), e introduciremos las modificaciones necesarias para agregar la resolución de conflictos. Luego describiremos detalladamente dicho sistema, presentando la factibilidad y el marco teórico para su completa realización, algunas consideraciones de la implementación en estado beta actual, sus ventajas respecto al resto de los mecanismos de coordinación de la competencia, y algunas posibilidades de trabajo a futuro. Por último, discutiremos algunas conclusiones globales y alternativas de trabajo para la coordinación en el sistema.
 

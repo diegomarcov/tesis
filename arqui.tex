@@ -32,7 +32,7 @@ enviar la acción que ha sido elegida por el módulo de toma de decisiones.
 
 \begin{figure}
  \centering
- \includegraphics[scale=.3]{agentarchitecture.eps}
+ \includegraphics[scale=.3]{agent_architecture.eps}
  \caption{Diagrama de la arquitectura del agente. Las líneas punteadas representan el 
  flujo de control, y las líneas contínuas representan el flujo de datos.}
  \label{fig:architecture}
@@ -73,10 +73,12 @@ que la información existente no resulte sobreescrita, y que información redundan
 incorporada. 
 
 La información que constituye conocimiento certero sobre el estado del escenario es 
-almacenada mediante términos, que sirven como argumentos del predicado \texttt{k/1} 
+almacenada mediante términos, que sirven como parámetros %esto era ARGUMENTOS
+del predicado \texttt{k/1} 
 (\textit{knowledge}). Cada uno de los datos de interés es representado mediante un 
 término diferente. 
-En muchos casos, esta clase de términos incluyen un argumento ligado al número de turno 
+En muchos casos, esta clase de términos incluyen un parámetro%argumento
+ligado al número de turno
 en el cual el dato fue percibido. De esta forma, es posible realizar ciertos análisis, 
 como por ejemplo, considerar obsoleta la información de una determinada antigüedad.
 
@@ -91,8 +93,8 @@ como por ejemplo, considerar obsoleta la información de una determinada antigüed
 \end{verbatim}
 
 Las creencias que provienen de inferencias y cálculos realizados a partir de información 
-ya existente también son almacenadas mediante términos, en este caso argumentos del 
-predicado \texttt{b/1} (\textit{beliefs}). Este tipo de creencias es empleado directamente 
+ya existente también son almacenadas mediante términos, en este caso parámetros %argumentos
+del predicado \texttt{b/1} (\textit{beliefs}). Este tipo de creencias es empleado directamente 
 por el módulo encargado de la toma de decisiones, y se mantienen vigentes sólo durante el 
 turno en el cual fueron generadas. Es decir, que, al finalizar cada turno, son descartadas 
 para evitar futuros problemas o inconcistencias.
@@ -108,7 +110,8 @@ surgidos de suposiciones realizadas sobre posibles estados futuros del escenario
 de su estado actual. Este tipo de datos resulta fundamental para facilitar los cálculos 
 realizados por los algoritmos que se encargan de buscar formas de maximizar el puntaje 
 del equipo. Dado que no constituye información real, sino posible a futuro, se almacena 
-mediante argumentos de un predicado especial, \texttt{h/1} (\textit{hypothetical}).
+mediante parámetros %argumentos
+de un predicado especial, \texttt{h/1} (\textit{hypothetical}).
 
 \begin{verbatim}
     h(nodoEquipo(Nodo, Dueño)).
@@ -147,7 +150,7 @@ meta ya planificada. Cada uno de estos componentes es descrito en esta sección.
 
 \begin{figure}[h]
  \centering
- \includegraphics[scale=.3]{agentprolog.eps}
+ \includegraphics[scale=.3]{agent_prolog.eps}
  \caption{Diagrama de la arquitectura interna del agente, particularmente todo lo relacionado 
  con la toma de decisiones, hecha en Prolog. Las líneas punteadas representan el 
  flujo de control, y las líneas contínuas representan el flujo de datos.}
@@ -316,5 +319,20 @@ metas con mayor facilidad, o abortarlas si es necesario.
 
 \subsection{Coordinación}
 
-En esta sección, DESCRIBIR EL AGREGADO NECESARIO a lo que se implementó completamente en la competencia
-para poder realizar la fase de coordinación!
+En esta tesis proponemos agregar una última fase a la arquitectura de los agentes; el propósito de ésta es introducir, primero, una nueva etapa de comunicación en la que cada uno de los agentes informa al resto de los miembros del equipo la decisión que ha tomado (es decir, cuál es su intención actual, y la acción inminente a realizar para intentar efectivizarla); y segundo, una etapa en la que se re-evaluará la acción a realizar dependiendo tanto de cuáles sean las intenciones y acciones de los compañeros de equipo, como de la fase actual del juego y las prioridades que los agentes tengan de acuerdo a ella.
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[scale=.3]{agent_architecture_expanded.eps}
+ \caption{Diagrama de la arquitectura expandida. Se agrega una etapa en la que los agentes comunican la decisión tomada al resto de sus compañeros (utilizando, por ejemplo, un proceso similar al servidor de percepciones). Las líneas punteadas representan el flujo de control, y las líneas contínuas representan el flujo de datos.}
+ \label{fig:agentProlog}
+\end{figure}
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[scale=.3]{agent_prolog_expanded.eps}
+ \caption{Diagrama de la arquitectura interna expandida. Se propone agregar una fase de coordinación, en la que, a partir de las decisiones tomadas por el resto de los compañeros, el agente re-evalúa su propia acción a realizar.}
+ \label{fig:agentProlog}
+\end{figure}
+
+En el capítulo siguiente detallaremos la propuesta de re-evaluación de las decisiones tomadas por el agente.
