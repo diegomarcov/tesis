@@ -33,8 +33,8 @@ de todos los nombres de predicados definidos en un programa \DLP\ \PP.
 \subsection{Argumento, Contraargumento y Derrota}
 
 Dado un programa \DLP\ \PP\ = \SD\, resolver consultas resulta en la construcción de \textit{argumentos}.
-Un argumento \ArgA\ es un conjunto (posiblemente vacío) de reglas rebatibles fijas que junto al conjunto \SSet
-provee una prueba lógica para un dado literal \ArgQ, satisfaciendo los requerimientos adicionales de 
+Un argumento \ArgA\ es un conjunto (posiblemente vacío) de reglas rebatibles fijas que junto al conjunto \SSet\  provee
+una prueba lógica para un dado literal \ArgQ, satisfaciendo los requerimientos adicionales de 
 \textit{no-contradicción} y \textit{minimalidad}. Formalmente:
 
 \begin{definicion}[Argumento]
@@ -116,7 +116,7 @@ El segundo criterio fue el aplicado en el desarrollo del sistema que se presenta
 Dado un argumento \AQ, pueden existir diferentes derrotadores $\BaQa$ $\ldots$ $\BkQk$, k $\ge$ 0 para
 \AQ. Si el argumento \AQ\ es derrotado, entonces ya no estaría soportando su conclusión \ArgQ. 
 Sin embargo, dado que los derrotadores son argumentos, estos pueden a su vez ser derrotados. Esto 
-induce un análisis dialéctico recursivo completo para determinar que argumentos son derrotados en 
+induce un análisis dialéctico recursivo completo para determinar qué argumentos son derrotados en 
 última instancia. Para caracterizar este proceso, primero se introducen algunas nociones auxiliares.
 
 Una \textit{línea argumentativa} comenzando en un argumento \AoQo\ (denotado $\lambda^{\scriptsize \AoQo}$)
@@ -126,7 +126,7 @@ A fin de evitar razonamiento \textit{falaz} o mal-formado (\eg , lineas argument
 análisis dialéctico impone restricciones adicionales para que el intercambio de argumentos pueda ser 
 considerado racionalmente \textit{aceptable}. Puede ser probado que las líneas argumentativas aceptables 
 son finitas. Un tratamiento exhaustivo sobre restricciones de aceptabilidad pueden ser encontradas en el
-trabajo de Garcia y Simari. %REF
+trabajo de García y Simari\cite{delp04}. %REF
 Dado un programa \DLP\ \PP\ y un argumento inicial \AoQo, el conjunto de todas las líneas argumentativas
 aceptables comenzando en \AoQo\ da lugar a un análisis dialéctico completo para \AoQo\ (\ie, todos los
 diálogos posibles sobre \AoQo\ entre proponente y oponente), formalizado mediante un \textit{árbol dialéctico}.
@@ -137,7 +137,7 @@ Un árbol dialéctico será marcado como un árbol {\footnotesize AND-OR}: todas las
 $T_{\scriptsize \AoQo}$ serán marcadas como nodos U (dado que no poseen derrotadores), y cada nodo interno 
 será marcado como nodo D si y sólo si tiene al menos un nodo U como hijo, y como nodo U en otro caso. 
 Un argumento \AoQo\ es finalmente aceptado como válido (o \textit{garantizado}) con respecto a un programa 
-\DLP\ \PP si y sólo si la raíz del árbol dialéctico asociado $T_{\scriptsize \AoQo}$ está etiquetado como \textit{nodo U}. %Superíndice
+\DLP\ \PP\  si y sólo si la raíz del árbol dialéctico asociado $T_{\scriptsize \AoQo}$ está etiquetado como \textit{nodo U}. %Superíndice
 
 Dado un programa \DLP\ \PP, resolver una consulta \ArgQ\ con respecto a \PP\ implica determinar si \ArgQ\ está soportado por (al menos) un argumento garantizado. Diferentes actitudes doxásticas %?
 pueden ser distinguidas de la siguiente manera:

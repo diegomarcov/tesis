@@ -1,6 +1,6 @@
 \section{Modelo BDI}
 
-El \textit{modelo Creencia-Deseo-Intensión}, en adelante \textit{BDI} 
+El \textit{modelo Creencia-Deseo-Intención}, en adelante \textit{BDI} 
 (\textit{Belief-Desire-Intention}),
 es un modelo desarrollado para el diseño de agentes inteligentes, basado en una
 vista simplificada de la inteligencia humana. Como se analizará en la sección 
@@ -21,7 +21,7 @@ y las acciones que conducen a ese objetivo.
 Estos conceptos son incorporados al modelo mediante la implementación de los 
 aspectos principales de la teoría del razonamiento práctico humano de Michael Bratman %REF
 (también referido como Belief-Desire-Intention, o BDI). Es decir, implementa 
-las nociones de creencia, deseo y (en particular) intensión, de una manera inspirada 
+las nociones de creencia, deseo y (en particular) intención, de una manera inspirada 
 por Bratman. Una discusión más extensa puede ser encontrada en el mencionado 
 trabajo de Bratman\cite{brat99} y Searle\cite{searle1985}.
 
@@ -32,7 +32,7 @@ Los agentes BDI son capaces de balancear el tiempo invertido en deliberar sobre 
 planes (elegir qué hacer) y ejecutar estos planes (llevarlo a cabo). La actividad 
 de crear los planes en primera instancia, escapa al alcance del modelo.
 
-\subsection{Creencias, Deseos e Intensiones}
+\subsection{Creencias, Deseos e Intenciones}
 
 Las \textit{creencias, deseos e intenciones} son consideradas estados mentales 
 intencionales (de forma opuesta a, por ejemplo, el dolor o el placer). Las \textit{creencias} 
@@ -58,18 +58,18 @@ asumido, en función alcanzar los estados o situaciones deseadas.
 \subsection{Deliberación y planificación}
 
 Por \textit{deliberación} entendemos lo que la literatura denomina \textit{silogismo práctico},
-es decir, la inferencia de una intensión a partir de un conjunto de creencias y
-deseos. Esto es, la selección de un deseo factible. Una \textit{desición} 
+es decir, la inferencia de una intención a partir de un conjunto de creencias y
+deseos. Esto es, la selección de un deseo factible. Una \textit{decisión} 
 consiste en el último paso de este proceso de inferencia mediante el cual 
-resulta electo uno de muchos deseos y potenciales intensiones. Es, por esto, un
-concepto ligado directamente al de intensión. Definir una intensión implica, en 
+resulta electo uno de muchos deseos y potenciales intenciones. Es, por esto, un
+concepto ligado directamente al de intención. Definir una intención implica, en 
 términos de agentes implementados, comenzar la ejecución de un \textit{plan}.
 
 Una \textit{acción} puede ser definida, intuitivamente, como la ejecución de
 una operación que causa un determinado efecto o consecuencia sobre el entorno
 en el cual se está desempeñando el agente. La \textit{planificación} consiste 
 en la disposición de una secuencia de acciones con el fin de lograr una (o más)
-de sus intensiones de alcanzar una meta. Los planes pueden ser complejos en 
+de sus intenciones de alcanzar una meta. Los planes pueden ser complejos en 
 mayor o menor medida, en función a la cantidad de acciones que contiene. En 
 particular, los planes pueden contener otros planes, dado que satisfacer una
 meta puede requerir la satisfacción de metas intermedias. Esto refleja que en 

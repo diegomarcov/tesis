@@ -123,7 +123,7 @@ representadas utilizando términos. Si la intención no posee argumentos, entonces
 representada mediante un átomo. En otro caso, se emplea un functor que denota el 
 nombre de la intención, acompañado por un argumento. Las acciones, por el contrario, 
 son representadas a través de listas. El primer elemento de la lista es un atómo denotando 
-el tipo de acción. Y el resto de la lista contiene, ocacionalmente, un término que 
+el tipo de acción. El resto de la lista contiene, ocasionalmente, un término que 
 indica el argumento de la acción, como por ejemplo el nombre de un nodo o un agente.
 Los planes son representados mediante listas de acciones, es decir, listas de listas.
 
@@ -177,12 +177,14 @@ Existe un conjunto de creencias que resultan de utilidad general para todo el pr
 de decisión. Por esta razón, son las primeras en ser calculadas y almacenadas durante 
 el seteo de creencias. Entre los datos incluidos, se encuentra el puntaje que están 
 aportando las zonas armadas, la diferencia de puntos que puede producirse si el agente 
-abandona su posición, y la seguridad que brindan las distintas ubicaciones posibles en 
+abandona su posición (ambos puntajes calculados utilizando una versión propia y optimizada
+del \textit{algoritmo de coloreo} de la competencia, que a su vez será reutilizado en la etapa
+de resolución de conflictos), y la seguridad que brindan las distintas ubicaciones posibles en 
 cuanto a la presencia de agentes saboteadores enemigos. 
 
 \subsubsection{Deseos}
 
-Como se detallará en el capítulo siguiente, el proceso de toma de decisión conlleva el 
+Como se detallará en la sección siguiente, el proceso de toma de decisión conlleva el 
 pesaje de todos los posibles deseos del agente, y la posterior selección del más beneficioso. 
 Dichos deseos surgen de un conjunto predefinido, y pueden, según sea el caso, estar 
 instanciados con diferentes entidades del juego, como agentes o nodos. Para que esta 
@@ -239,9 +241,7 @@ analizados, se convierte en la nueva meta del agente, la cual es almacenada hast
 alcanzada o reemplazada.
 
 Tanto la evaluación como el pesaje de los deseos, son llevados a cabo empleando \textit{argumentación} 
-en un módulo especial, implementado con la ayuda de \textit{DeLP}. 
-Detalles sobre la implementación y como la argumentación es aplicada en el proceso de 
-razonamiento, son estudiados en el capítulo dedicado a la Toma de Decisiones. %referencia, cambiar nombre?
+en un módulo especial, implementado con la ayuda de \textit{DeLP}.
 
 \subsection{Planificación}
 
@@ -270,7 +270,7 @@ esta resulta más productiva.
 
 Dado que el plan se encuentra almacenado de manera completa y ordenada, la ejecución se 
 realiza en forma directa. Se toma la próxima acción, es decir, la primera acción del plan 
-restante, y se la retorna al módulo principal del programa. Este se encarga posteriormente 
+restante, y se la retorna al módulo principal del programa. Éste se encarga posteriormente 
 de enviarla al entorno, para que se convierta finalmente en la siguiente acción realizada 
 por el agente.
 
